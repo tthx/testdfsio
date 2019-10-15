@@ -36,8 +36,6 @@ import org.apache.hadoop.mapred.*;
  */
 public abstract class IOMapperBase<T> extends Configured
     implements Mapper<Text, LongWritable, Text, Text> {
-
-  protected byte[] buffer;
   protected int bufferSize;
   protected FileSystem fs;
   protected String hostName;
@@ -54,7 +52,6 @@ public abstract class IOMapperBase<T> extends Configured
       throw new RuntimeException("Cannot create file system.", e);
     }
     bufferSize = conf.getInt("test.io.file.buffer.size", 4096);
-    buffer = new byte[bufferSize];
     try {
       hostName = InetAddress.getLocalHost().getHostName();
     } catch (Exception e) {
@@ -123,7 +120,7 @@ public abstract class IOMapperBase<T> extends Configured
 
     reporter.setStatus("starting " + name + " ::host = " + hostName);
 
-    this.stream = getIOStream(name);
+    stream = getIOStream(name);
     T statValue = null;
     long tStart = System.currentTimeMillis();
     try {

@@ -31,10 +31,12 @@ public class ReadMapper extends IOStatMapper {
   @Override // IOMapperBase
   public Long doIO(Reporter reporter, String name, long totalSize // in bytes
   ) throws IOException {
-    InputStream in = (InputStream) this.stream;
+    byte[] buffer = new byte[bufferSize];
+    InputStream in = (InputStream) stream;
     long actualSize = 0;
+    int curSize;
     while (actualSize < totalSize) {
-      int curSize = in.read(buffer, 0, bufferSize);
+      curSize = in.read(buffer, 0, bufferSize);
       if (curSize < 0)
         break;
       actualSize += curSize;

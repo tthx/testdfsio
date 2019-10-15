@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.EnumSet;
+import java.util.Random;
 
 import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.Path;
@@ -20,9 +21,6 @@ public class WriteMapper extends IOStatMapper {
   private static final Logger LOG = LoggerFactory.getLogger(WriteMapper.class);
 
   public WriteMapper() {
-    for (int i = 0; i < bufferSize; i++) {
-      buffer[i] = (byte) ('0' + i % 50);
-    }
   }
 
   @Override // IOMapperBase
@@ -51,11 +49,15 @@ public class WriteMapper extends IOStatMapper {
   @Override // IOMapperBase
   public Long doIO(Reporter reporter, String name, long totalSize // in bytes
   ) throws IOException {
-    OutputStream out = (OutputStream) this.stream;
+    byte[] buffer = new byte[bufferSize];
+    Random random = new Random();
+    OutputStream out = (OutputStream) stream;
     // write to the file
     long nrRemaining;
+    int curSize;
     for (nrRemaining = totalSize; nrRemaining > 0; nrRemaining -= bufferSize) {
-      int curSize = (bufferSize < nrRemaining) ? bufferSize : (int) nrRemaining;
+      random.nextBytes(buffer);
+      curSize = (bufferSize < nrRemaining) ? bufferSize : (int) nrRemaining;
       out.write(buffer, 0, curSize);
       reporter.setStatus("writing " + name + "@" + (totalSize - nrRemaining)
           + "/" + totalSize + " ::host = " + hostName);

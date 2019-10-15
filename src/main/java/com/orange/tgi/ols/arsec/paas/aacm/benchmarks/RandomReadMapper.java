@@ -56,11 +56,13 @@ public class RandomReadMapper extends IOStatMapper {
   @Override // IOMapperBase
   public Long doIO(Reporter reporter, String name, long totalSize // in bytes
   ) throws IOException {
-    PositionedReadable in = (PositionedReadable) this.stream;
+    byte[] buffer = new byte[bufferSize];
+    PositionedReadable in = (PositionedReadable) stream;
     long actualSize = 0;
+    int curSize;
     for (long pos = nextOffset(-1); actualSize < totalSize;
         pos = nextOffset(pos)) {
-      int curSize = in.read(pos, buffer, 0, bufferSize);
+      curSize = in.read(pos, buffer, 0, bufferSize);
       if (curSize < 0)
         break;
       actualSize += curSize;
