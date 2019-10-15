@@ -4,6 +4,7 @@ target
 .settings
 .classpath
 .project
+.sts4-cache
 
 ### IntelliJ IDEA ###
 .idea
