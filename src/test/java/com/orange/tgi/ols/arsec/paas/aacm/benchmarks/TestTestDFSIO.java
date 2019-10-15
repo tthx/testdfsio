@@ -1,8 +1,14 @@
 package com.orange.tgi.ols.arsec.paas.aacm.benchmarks;
 
+import java.io.File;
+import java.util.UUID;
+
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hdfs.client.HdfsClientConfigKeys;
+import org.apache.hadoop.net.unix.DomainSocket;
+import org.apache.hadoop.net.unix.TemporarySocketDirectory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,14 +19,27 @@ public class TestTestDFSIO {
 
   private static final int DEFAULT_NR_BYTES = 128;
   private static final int DEFAULT_NR_FILES = 4;
+  private static final int DEFAULT_NR_DATANODES = 2;
   private static MiniDFSCluster cluster;
   private static TestDFSIO bench;
-
+  private static TemporarySocketDirectory sockDir;
+  
   @BeforeClass
   public static void beforeClass() throws Exception {
     bench = new TestDFSIO();
     bench.getConf().setInt(DFSConfigKeys.DFS_HEARTBEAT_INTERVAL_KEY, 1);
-    cluster = new MiniDFSCluster.Builder(bench.getConf()).numDataNodes(2)
+    // Enable Short Circuit Local Read
+    bench.getConf().setBoolean(HdfsClientConfigKeys.Read.ShortCircuit.KEY, true);
+    bench.getConf().setBoolean(HdfsClientConfigKeys.Read.ShortCircuit.SKIP_CHECKSUM_KEY,
+        false);
+    bench.getConf().set(HdfsClientConfigKeys.DFS_CLIENT_CONTEXT,
+        UUID.randomUUID().toString());
+    sockDir = new TemporarySocketDirectory();
+    DomainSocket.disableBindPathValidation();
+    bench.getConf().set(DFSConfigKeys.DFS_DOMAIN_SOCKET_PATH_KEY,
+        new File(sockDir.getDir(),
+          "TestShortCircuitLocalRead._PORT.sock").getAbsolutePath());
+    cluster = new MiniDFSCluster.Builder(bench.getConf()).numDataNodes(DEFAULT_NR_DATANODES)
         .format(true).build();
     FileSystem fs = cluster.getFileSystem();
     bench.createControlFile(fs, DEFAULT_NR_BYTES, DEFAULT_NR_FILES);
@@ -35,6 +54,7 @@ public class TestTestDFSIO {
       return;
     FileSystem fs = cluster.getFileSystem();
     bench.cleanup(fs);
+    sockDir.close();
     cluster.shutdown();
   }
 
@@ -57,6 +77,14 @@ public class TestTestDFSIO {
     bench.getConf().setLong("test.io.skip.size", 0);
     long execTime = bench.randomReadTest(fs);
     bench.analyzeResult(fs, TestType.TEST_TYPE_READ_RANDOM, execTime);
+  }
+
+  @Test(timeout = 10000)
+  public void testReadShortCircuit() throws Exception {
+    FileSystem fs = cluster.getFileSystem();
+    bench.getConf().setLong("test.io.skip.size", 0);
+    long execTime = bench.shortCircuitReadTest(fs);
+    bench.analyzeResult(fs, TestType.TEST_TYPE_READ_SHORTCIRCUIT, execTime);
   }
 
   @Test(timeout = 10000)

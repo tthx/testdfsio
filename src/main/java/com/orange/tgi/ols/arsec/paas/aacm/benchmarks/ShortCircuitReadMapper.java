@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Direct read mapper class.
  */
-public class DirectReadMapper extends IOStatMapper {
+public class ShortCircuitReadMapper extends IOStatMapper {
   private static final Logger LOG
-      = LoggerFactory.getLogger(DirectReadMapper.class);
+      = LoggerFactory.getLogger(ShortCircuitReadMapper.class);
 
-  public DirectReadMapper() {
+  public ShortCircuitReadMapper() {
   }
 
   private DistributedFileSystem getFileSystem()

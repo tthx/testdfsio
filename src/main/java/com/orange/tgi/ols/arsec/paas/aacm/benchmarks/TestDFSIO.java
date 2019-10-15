@@ -88,15 +88,15 @@ public class TestDFSIO implements Tool {
   public static final String BASE_FILE_NAME = "test_io_";
   public static final String DEFAULT_RES_FILE_NAME = "TestDFSIO_results.log";
   public static final long MEGA = ByteMultiple.MB.value();
-  public static final String USAGE
-      = "Usage: " + TestDFSIO.class.getSimpleName() + " [genericOptions]"
-          + " -read [-random | -backward | -skip [-skipSize Size]] |"
-          + " -write | -append | -truncate | -clean"
-          + " [-compression codecClassName]" + " [-nrFiles N]"
-          + " [-size Size[B|KB|MB|GB|TB]]"
-          + " [-resFile resultFileName] [-bufferSize Bytes]"
-          + " [-storagePolicy storagePolicyName]"
-          + " [-erasureCodePolicy erasureCodePolicyName]";
+  public static final String USAGE = "Usage: " + TestDFSIO.class.getSimpleName()
+      + " [genericOptions]"
+      + " -read [-random | -backward | -skip [-skipSize Size] | -shortcircuit] |"
+      + " -write | -append | -truncate | -clean"
+      + " [-compression codecClassName]" + " [-nrFiles N]"
+      + " [-size Size[B|KB|MB|GB|TB]]"
+      + " [-resFile resultFileName] [-bufferSize Bytes]"
+      + " [-storagePolicy storagePolicyName]"
+      + " [-erasureCodePolicy erasureCodePolicyName]";
 
   private Configuration config;
   public static final String STORAGE_POLICY_NAME_KEY
@@ -116,6 +116,7 @@ public class TestDFSIO implements Tool {
     TEST_TYPE_CLEANUP("cleanup"), TEST_TYPE_APPEND("append"),
     TEST_TYPE_READ_RANDOM("random read"),
     TEST_TYPE_READ_BACKWARD("backward read"), TEST_TYPE_READ_SKIP("skip read"),
+    TEST_TYPE_READ_SHORTCIRCUIT("shortcircuit read"),
     TEST_TYPE_TRUNCATE("truncate");
 
     private String type;
@@ -188,6 +189,10 @@ public class TestDFSIO implements Tool {
 
   public static Path getRandomReadDir(Configuration conf) {
     return new Path(getBaseDir(conf), "io_random_read");
+  }
+
+  public static Path getShortCircuitReadDir(Configuration conf) {
+    return new Path(getBaseDir(conf), "io_shortcircuit_read");
   }
 
   public static Path getTruncateDir(Configuration conf) {
@@ -299,6 +304,15 @@ public class TestDFSIO implements Tool {
     return execTime;
   }
 
+  public long shortCircuitReadTest(FileSystem fs) throws IOException {
+    Path readDir = getShortCircuitReadDir(config);
+    fs.delete(readDir, true);
+    long tStart = System.currentTimeMillis();
+    runIOTest(ShortCircuitReadMapper.class, readDir);
+    long execTime = System.currentTimeMillis() - tStart;
+    return execTime;
+  }
+
   public long truncateTest(FileSystem fs) throws IOException {
     Path TruncateDir = getTruncateDir(config);
     fs.delete(TruncateDir, true);
@@ -326,6 +340,9 @@ public class TestDFSIO implements Tool {
       case TEST_TYPE_READ_BACKWARD:
       case TEST_TYPE_READ_SKIP:
         ioer = new RandomReadMapper();
+        break;
+      case TEST_TYPE_READ_SHORTCIRCUIT:
+        ioer = new ShortCircuitReadMapper();
         break;
       case TEST_TYPE_TRUNCATE:
         ioer = new TruncateMapper();
@@ -391,6 +408,10 @@ public class TestDFSIO implements Tool {
         if (testType != TestType.TEST_TYPE_READ)
           return -1;
         testType = TestType.TEST_TYPE_READ_SKIP;
+      } else if (args[i].equalsIgnoreCase("-shortcircuit")) {
+        if (testType != TestType.TEST_TYPE_READ)
+          return -1;
+        testType = TestType.TEST_TYPE_READ_SHORTCIRCUIT;
       } else if (args[i].equalsIgnoreCase("-truncate")) {
         testType = TestType.TEST_TYPE_TRUNCATE;
       } else if (args[i].equalsIgnoreCase("-clean")) {
@@ -485,6 +506,9 @@ public class TestDFSIO implements Tool {
       case TEST_TYPE_READ_BACKWARD:
       case TEST_TYPE_READ_SKIP:
         randomReadTest(fs);
+        break;
+      case TEST_TYPE_READ_SHORTCIRCUIT:
+        shortCircuitReadTest(fs);
         break;
       case TEST_TYPE_TRUNCATE:
         truncateTest(fs);
@@ -689,6 +713,8 @@ public class TestDFSIO implements Tool {
       case TEST_TYPE_READ_BACKWARD:
       case TEST_TYPE_READ_SKIP:
         return new Path(getRandomReadDir(config), "part-00000");
+      case TEST_TYPE_READ_SHORTCIRCUIT:
+        return new Path(getShortCircuitReadDir(config), "part-00000");
       case TEST_TYPE_TRUNCATE:
         return new Path(getTruncateDir(config), "part-00000");
       default:
