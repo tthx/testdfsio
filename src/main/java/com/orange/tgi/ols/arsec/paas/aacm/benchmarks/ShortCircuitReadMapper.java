@@ -48,8 +48,7 @@ public class ShortCircuitReadMapper extends IOStatMapper {
         in = compressionCodec.createInputStream(in);
       LOG.info("in = " + in.getClass().getName());
     } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new IOException(e);
     }
     return in;
   }
@@ -62,13 +61,15 @@ public class ShortCircuitReadMapper extends IOStatMapper {
     long actualSize = 0;
     int curSize;
     buffer.limit(buffer.capacity());
-    while (buffer.hasRemaining()) {
+    while (actualSize < totalSize) {
       curSize = in.read(buffer);
       if (curSize < 0)
         break;
+      buffer.flip();
       actualSize += curSize;
       reporter.setStatus("reading " + name + "@" + actualSize + "/" + totalSize
           + " ::host = " + hostName);
+      buffer.clear();
     }
     return Long.valueOf(actualSize);
   }

@@ -44,8 +44,8 @@ public class RandomReadMapper extends IOStatMapper {
   @Override // IOMapperBase
   public Closeable getIOStream(String name) throws IOException {
     Path filePath = new Path(TestDFSIO.getDataDir(getConf()), name);
-    this.fileSize = fs.getFileStatus(filePath).getLen();
     InputStream in = fs.open(filePath);
+    fileSize = fs.getFileStatus(filePath).getLen();
     if (compressionCodec != null)
       in = new FSDataInputStream(compressionCodec.createInputStream(in));
     LOG.info("in = " + in.getClass().getName());

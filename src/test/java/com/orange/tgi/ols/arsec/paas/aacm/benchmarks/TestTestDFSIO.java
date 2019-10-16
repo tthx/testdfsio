@@ -23,24 +23,25 @@ public class TestTestDFSIO {
   private static MiniDFSCluster cluster;
   private static TestDFSIO bench;
   private static TemporarySocketDirectory sockDir;
-  
+
   @BeforeClass
   public static void beforeClass() throws Exception {
     bench = new TestDFSIO();
     bench.getConf().setInt(DFSConfigKeys.DFS_HEARTBEAT_INTERVAL_KEY, 1);
     // Enable Short Circuit Local Read
-    bench.getConf().setBoolean(HdfsClientConfigKeys.Read.ShortCircuit.KEY, true);
-    bench.getConf().setBoolean(HdfsClientConfigKeys.Read.ShortCircuit.SKIP_CHECKSUM_KEY,
-        false);
+    bench.getConf().setBoolean(HdfsClientConfigKeys.Read.ShortCircuit.KEY,
+        true);
+    bench.getConf().setBoolean(
+        HdfsClientConfigKeys.Read.ShortCircuit.SKIP_CHECKSUM_KEY, false);
     bench.getConf().set(HdfsClientConfigKeys.DFS_CLIENT_CONTEXT,
         UUID.randomUUID().toString());
     sockDir = new TemporarySocketDirectory();
     DomainSocket.disableBindPathValidation();
     bench.getConf().set(DFSConfigKeys.DFS_DOMAIN_SOCKET_PATH_KEY,
-        new File(sockDir.getDir(),
-          "TestShortCircuitLocalRead._PORT.sock").getAbsolutePath());
-    cluster = new MiniDFSCluster.Builder(bench.getConf()).numDataNodes(DEFAULT_NR_DATANODES)
-        .format(true).build();
+        new File(sockDir.getDir(), "TestShortCircuitLocalRead._PORT.sock")
+            .getAbsolutePath());
+    cluster = new MiniDFSCluster.Builder(bench.getConf())
+        .numDataNodes(DEFAULT_NR_DATANODES).format(true).build();
     FileSystem fs = cluster.getFileSystem();
     bench.createControlFile(fs, DEFAULT_NR_BYTES, DEFAULT_NR_FILES);
 
@@ -82,7 +83,6 @@ public class TestTestDFSIO {
   @Test(timeout = 10000)
   public void testReadShortCircuit() throws Exception {
     FileSystem fs = cluster.getFileSystem();
-    bench.getConf().setLong("test.io.skip.size", 0);
     long execTime = bench.shortCircuitReadTest(fs);
     bench.analyzeResult(fs, TestType.TEST_TYPE_READ_SHORTCIRCUIT, execTime);
   }

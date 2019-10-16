@@ -164,7 +164,7 @@ public class TestDFSIO implements Tool {
   }
 
   public TestDFSIO() {
-    this.config = new Configuration();
+    config = new Configuration();
   }
 
   public static String getBaseDir(Configuration conf) {
@@ -523,12 +523,12 @@ public class TestDFSIO implements Tool {
 
   @Override // Configurable
   public Configuration getConf() {
-    return this.config;
+    return config;
   }
 
   @Override // Configurable
   public void setConf(Configuration conf) {
-    this.config = conf;
+    config = conf;
   }
 
   /**
