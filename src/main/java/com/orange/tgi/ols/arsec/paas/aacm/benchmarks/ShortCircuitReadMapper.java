@@ -44,8 +44,6 @@ public class ShortCircuitReadMapper extends IOStatMapper {
     try {
       in = getFileSystem()
           .open(new Path(TestDFSIO.getDataDir(getConf()), name));
-      if (compressionCodec != null)
-        in = compressionCodec.createInputStream(in);
       LOG.info("in = " + in.getClass().getName());
     } catch (InterruptedException e) {
       throw new IOException(e);
