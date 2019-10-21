@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.orange.tgi.ols.arsec.paas.aacm.benchmarks</groupId>
   <artifactId>TestDFSIO</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
   <name>TestDFSIO, a distributed i/o benchmark</name>
   <description>Apache Hadoop TestDFSIO corrections and enhancements</description>
   <properties>
