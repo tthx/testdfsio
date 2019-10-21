@@ -23,7 +23,10 @@ Finally, the following information is appended to a local file:
 - average I/O rate in mb/sec per file,
 - standard deviation of I/O rate.
 
-**Note**: TestDFSIO is a Map/Reduce job, the Map/Reduce or [*Apache Hadoop YARN*](https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html) stack of the cluster to benchmark must be correctly working.
+**Notes**:
+
+- TestDFSIO is a Map/Reduce job, the Map/Reduce or [*Apache Hadoop YARN*](https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html) stack of the cluster to benchmark must be correctly working.
+- TestDFSIO benchmarks only the I/O performances. The YARN scheduler has no opportunity to do any optimization for the TestDFSIO Map/Reduce application: TestDFSIO intentionally avoids any overhead or optimizations induced by Map/Reduce framework.
 
 TestDFSIO arguments are prompted by the following command:
 
