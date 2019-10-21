@@ -90,14 +90,16 @@ In `[genericOptions]`, the most common HDFS behaviors we would like to alter are
   - `-Dmapreduce.task.io.sort.mb=<n>` (default: 100), where `<n>` the cumulative size of the serialization and accounting buffers storing records emitted from a map task, in megabytes.
   - `-Dyarn.app.mapreduce.am.log.level=<log level>`, where `<log level>` is the logging level for the Map/Reduce ApplicationMaster. The allowed levels are: `OFF`, `FATAL`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` and `ALL`.
   - For map tasks:
-    - `-Dmapreduce.job.maps=<n>` (default: 2), where `<n>` is the number of map tasks per job, 
+    - `-Dmapreduce.job.maps=<n>` (default: 2), where `<n>` is the number of map tasks per job,
+    - `-Dmapreduce.job.running.map.limit=<n>` (default: 0), where `<n>` is the maximum number of simultaneous map tasks per job. There is no limit if this value is 0 or negative,
     - `-Dmapreduce.map.memory.mb=<n>` (default: -1), where `<n>` is the amount memory for each map task,
-    - `-Dmapreduce.map.java.opts=<JVM options>`, where `<JVM options>`, are JVM options (e.g. `-XX:+UseG1GC`).
+    - `-Dmapreduce.map.java.opts=<JVM options>`, where `<JVM options>`, are JVM options (e.g. `-XX:+UseG1GC`),
     - `-Dmapreduce.map.log.level=<log level>`, where `<log level>` is the logging level for the map task. The allowed levels are: `OFF`, `FATAL`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` and `ALL`.
   - For reduce tasks: 
     - `-Dmapreduce.job.reduces=<n>` (default: 1), where `<n>` is the number of reducer tasks per job,
+    - `-Dmapreduce.job.running.reduce.limit=<n>` (default: 0), where `<n>` is the maximum number of simultaneous reducer tasks per job. There is no limit if this value is 0 or negative,
     - `-Dmapreduce.reduce.memory.mb=<n>` (default: -1),, where `<n>` is the amount memory for each reduce task,
-    - `-Dmapreduce.reduce.java.opts=<JVM options>`, where `<JVM options>`, are JVM options (e.g. `-XX:+UseG1GC`).
+    - `-Dmapreduce.reduce.java.opts=<JVM options>`, where `<JVM options>`, are JVM options (e.g. `-XX:+UseG1GC`),
     - `-Dmapreduce.reduce.log.level=<log level>`, where `<log level>` is the logging level for the reduce task. The allowed levels are: `OFF`, `FATAL`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` and `ALL`.
 
 **Note**: For TestDFSIO, you should set the amount of memory for map and reduces tasks at least to 1024 and JVM garbage collector to [*G1 Garbage Collector*](https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html) with `-XX:+UseG1GC`.
