@@ -1,11 +1,21 @@
 !#!bin/bash
 
-BUFFER_SIZE_LIST="";
-NRFILES_LIST="";
-SIZE_LIST="";
-BLOCK_SIZE_LIST="";
-REPLICATION_LIST="";
+TEST_BUILD_DATA_PROP="test.build.data";
+TEST_BUILD_DATA="";
+RESULT_PROP="resultDir";
 RESULT_DIR="";
+OCCURENCE_PROP="nrOcc";
+OCCURENCE="";
+NRFILES_PROP="nrFiles";
+NRFILES_LIST="";
+SIZE_PROP="size";
+SIZE_LIST="";
+BUFFER_SIZE_PROP="bufferSize";
+BUFFER_SIZE_LIST="4096";
+BLOCK_SIZE_PROP="blockSize";
+BLOCK_SIZE_LIST="256m";
+REPLICATION_PROP="replication";
+REPLICATION_LIST="3";
 
 JAR_FILE="TestDFSIO-0.0.1.jar";
 
@@ -20,6 +30,9 @@ MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT="0";
 MAPREDUCE_REDUCE_MEMORY_MB="1g";
 MAPREDUCE_REDUCE_JAVA_OPTS="-XX:+UseG1GC";
 MAPREDUCE_MAP_LOG_LEVEL="INFO";
+
+YARN_CMD="yarn";
+JAVA_CMD="java";
 
 function echoerr { printf "%s\n" "${@}" >&2; }
 
@@ -53,22 +66,28 @@ function getProperties {
       key="${key//[[:space:]]/}";
       value="${value%%#*}";
       case "${key}" in
-        bufferSize)
+        "${OCCURENCE_PROP}")
+          OCCURENCE="${value}";
+          ;;
+        "${TEST_BUILD_DATA_PROP}")
+          TEST_BUILD_DATA="${value}";
+          ;;
+        "${BUFFER_SIZE_PROP}")
           BUFFER_SIZE_LIST="${value}";
           ;;
-        nrFiles)
+        "${NRFILES_PROP}")
           NRFILES_LIST="${value}";
           ;;
-        size)
+        "${SIZE_PROP}")
           SIZE_LIST="${value}";
           ;;
-        blockSize)
+        "${BLOCK_SIZE_PROP}")
           BLOCK_SIZE_LIST="${value}";
           ;;
-        replication)
+        "${REPLICATION_PROP}")
           REPLICATION_LIST="${value}";
           ;;
-        resultDir)
+        "${RESULT_PROP}")
           RESULT_DIR="${value}";
           ;;
         jarFile)
@@ -129,14 +148,14 @@ function getProperties {
 
 function checkRequirements {
   local errmsg="ERROR: ${FUNCNAME[0]}:";
-  if [[ -z "$(which java)" ]];
+  if [[ -z "$(which ${JAVA_CMD})" ]];
   then
-    echoerr "${errmsg} \"java\" command is not found in PATH";
+    echoerr "${errmsg} \"${JAVA_CMD}\" command is not found in PATH";
     return 1;
   fi
-  if [[ -z "$(which yarn)" ]];
+  if [[ -z "$(which ${YARN_CMD})" ]];
   then
-    echoerr "${errmsg} \"yarn\" command is not found in PATH";
+    echoerr "${errmsg} \"${YARN_CMD}\" command is not found in PATH";
     return 1;
   fi
   if [[ ! -f "${JAR_FILE}" ]];
@@ -144,34 +163,29 @@ function checkRequirements {
     echoerr "${errmsg} File \"${JAR_FILE}\" is not found.";
     return 1;
   fi
-  if [[ -z "${BUFFER_SIZE_LIST}" ]];
+  if [[ -z "${OCCURENCE}" ]];
   then
-    echoerr "${errmsg} \"bufferSize\" property is not defined";
+    echoerr "${errmsg} \"${OCCURENCE_PROP}\" property is not defined";
+    return 1;
+  fi
+  if [[ -z "${TEST_BUILD_DATA}" ]];
+  then
+    echoerr "${errmsg} \"${TEST_BUILD_DATA_PROP}\" property is not defined";
     return 1;
   fi
   if [[ -z "${NRFILES_LIST}" ]];
   then
-    echoerr "${errmsg} \"nrFiles\" property is not defined";
+    echoerr "${errmsg} \"${NRFILES_PROP}\" property is not defined";
     return 1;
   fi
   if [[ -z "${SIZE_LIST}" ]];
   then
-    echoerr "${errmsg} \"size\" property is not defined";
-    return 1;
-  fi
-  if [[ -z "${BLOCK_SIZE_LIST}" ]];
-  then
-    echoerr "${errmsg} \"blockSize\" property is not defined";
-    return 1;
-  fi
-  if [[ -z "${REPLICATION_LIST}" ]];
-  then
-    echoerr "${errmsg} \"replication\" property is not defined";
+    echoerr "${errmsg} \"${SIZE_PROP}\" property is not defined";
     return 1;
   fi
   if [[ -z "${RESULT_DIR}" ]];
   then
-    echoerr "${errmsg} \"resultDir\" property is not defined";
+    echoerr "${errmsg} \"${RESULT_PROP}\" property is not defined";
     return 1;
   else
     if [[ ! -d "${RESULT_DIR}" ]];
@@ -185,4 +199,36 @@ function checkRequirements {
     fi
   fi
   return 0;
+}
+
+function main {
+  getProperties "${1}";
+  shift 1;
+  checkRequirements;
+  local iOcc=0;
+  local iFile;
+  local iSize;
+  local iBuffer;
+  local iBlock;
+  local iReplication;
+  while ${iOcc} -lt ${OCCURENCE}
+  do
+    for iFile in ${NRFILES_LIST}
+    do
+      for iSize in ${SIZE_LIST}
+      do
+        for iBuffer in ${BLOCK_SIZE_LIST}
+        do
+          for iBlock in ${BLOCK_SIZE_LIST}
+          do
+            for iReplication in ${REPLICATION_LIST}
+            do
+              ${YARN_CMD} jar 
+            done
+          done
+        done
+      done
+    done
+    iOcc+=1;
+  done
 }
