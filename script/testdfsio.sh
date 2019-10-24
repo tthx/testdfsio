@@ -2,8 +2,10 @@
 
 TEST_BUILD_DATA_PROP="test.build.data";
 TEST_BUILD_DATA="";
-RESULT_PROP="resultDir";
+RESULT_DIR_PROP="resultDir";
 RESULT_DIR="";
+RESULT_FILE_PROP="resFile";
+RESULT_FILE_PREFIX="TestDFSIO";
 OCCURENCE_PROP="nrOcc";
 OCCURENCE="";
 NRFILES_PROP="nrFiles";
@@ -16,25 +18,64 @@ BLOCK_SIZE_PROP="blockSize";
 BLOCK_SIZE_LIST="256m";
 REPLICATION_PROP="replication";
 REPLICATION_LIST="3";
+COMPRESSION_PROP="compression";
+COMPRESSION_LIST="";
+STORAGE_POLICY_PROP="storagePolicy";
+STORAGE_POLICY_LIST="";
+ERASURE_CODE_POLICY_PROP="erasureCodePolicy";
+ERASURE_CODE_POLICY_LIST="";
+SHORT_CIRCUIT_PROP="shortcircuit";
+SHORT_CIRCUIT="";
+WRITE_PROP="write";
+READ_PROP="";
 
+JAR_FILE_PROP="jarFile";
 JAR_FILE="TestDFSIO-0.0.1.jar";
+PROGRAM="com.orange.tgi.ols.arsec.paas.aacm.benchmarks.TestDFSIO";
 
-YARN_APP_MAPREDUCE_AM_LOG_LEVEL="INFO";
-MAPREDUCE_JOB_MAPS="2";
-MAPREDUCE_JOB_RUNNING_MAP_LIMIT="0";
-MAPREDUCE_MAP_MEMORY_MB="1g";
-MAPREDUCE_MAP_JAVA_OPTS="-XX:+UseG1GC";
-MAPREDUCE_MAP_LOG_LEVEL="INFO";
-MAPREDUCE_JOB_REDUCES="1";
-MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT="0";
-MAPREDUCE_REDUCE_MEMORY_MB="1g";
-MAPREDUCE_REDUCE_JAVA_OPTS="-XX:+UseG1GC";
-MAPREDUCE_MAP_LOG_LEVEL="INFO";
-
-YARN_CMD="yarn";
+JAVA_HOME_PROP="java.home";
+JAVA_OPTS_PROP="java.opts";
 JAVA_CMD="java";
 
+HADOOP_HOME_PROP="hadoop.home";
+HADOOP_CONF_DIR_PROP="hadoop.conf.dir";
+YARN_CMD="yarn";
+
+YARN_APP_MAPREDUCE_AM_LOG_LEVEL_PROP="yarn.app.mapreduce.am.log.level";
+YARN_APP_MAPREDUCE_AM_LOG_LEVEL="INFO";
+# Map tasks properties
+MAPREDUCE_JOB_MAPS_PROP="mapreduce.job.maps";
+MAPREDUCE_JOB_MAPS="2";
+MAPREDUCE_JOB_RUNNING_MAP_LIMIT_PROP="mapreduce.job.running.map.limit";
+MAPREDUCE_JOB_RUNNING_MAP_LIMIT="0";
+MAPREDUCE_MAP_MEMORY_MB_PROP="mapreduce.map.memory.mb";
+MAPREDUCE_MAP_MEMORY_MB="1g";
+MAPREDUCE_MAP_JAVA_OPTS_PROP="mapreduce.map.java.opts";
+MAPREDUCE_MAP_JAVA_OPTS="-XX:+UseG1GC";
+MAPREDUCE_MAP_LOG_LEVEL_PROP="mapreduce.map.log.level";
+MAPREDUCE_MAP_LOG_LEVEL="INFO";
+# Reducer tasks properties
+MAPREDUCE_JOB_REDUCES_PROP="mapreduce.job.reduces";
+MAPREDUCE_JOB_REDUCES="1";
+MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT_PROP="mapreduce.job.running.reduce.limit";
+MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT="0";
+MAPREDUCE_REDUCE_MEMORY_MB_PROP="mapreduce.reduce.memory.mb";
+MAPREDUCE_REDUCE_MEMORY_MB="1g";
+MAPREDUCE_REDUCE_JAVA_OPTS_PROP="mapreduce.reduce.java.opts";
+MAPREDUCE_REDUCE_JAVA_OPTS="-XX:+UseG1GC";
+MAPREDUCE_REDUCE_LOG_LEVEL_PROP="mapreduce.reduce.log.level";
+MAPREDUCE_REDUCE_LOG_LEVEL="INFO";
+
 function echoerr { printf "%s\n" "${@}" >&2; }
+
+function trim() {
+  local var="${*}";
+  # remove leading whitespace characters
+  var="${var#"${var%%[![:space:]]*}"}";
+  # remove trailing whitespace characters
+  var="${var%"${var##*[![:space:]]}"}";
+  printf "%s" "${var}";
+}
 
 function getProperties {
   local errmsg="ERROR: ${FUNCNAME[0]}:";
@@ -63,82 +104,110 @@ function getProperties {
         echoerr "${errmsg} Key \"${key}\" at line \"${line}\" in file \"${propertiesFile}\" has no value.";
         return 1;
       fi
-      key="${key//[[:space:]]/}";
+      key="$(trim "${key}")";
       value="${value%%#*}";
-      case "${key}" in
-        "${OCCURENCE_PROP}")
+      value="$(trim "${value}")";
+      case "${key,,}" in
+        "${COMPRESSION_PROP,,}")
+          COMPRESSION_LIST="${value}";
+          ;;
+        "${STORAGE_POLICY_PROP,,}")
+          STORAGE_POLICY_LIST="${value}";
+          ;;
+        "${ERASURE_CODE_POLICY_PROP,,}")
+          ERASURE_CODE_POLICY_LIST="${value}";
+          ;;
+        "${SHORT_CIRCUIT_PROP,,}")
+          if [[ "${value,,}" =~ ^[[:space:]]*true[[:space:]]*$ ]] || \
+            [[ ${value} -eq 1 ]];
+          then
+            SHORT_CIRCUIT="${value}";
+          fi
+          ;;
+        "${OCCURENCE_PROP,,}")
           OCCURENCE="${value}";
           ;;
-        "${TEST_BUILD_DATA_PROP}")
+        "${TEST_BUILD_DATA_PROP,,}")
           TEST_BUILD_DATA="${value}";
           ;;
-        "${BUFFER_SIZE_PROP}")
+        "${BUFFER_SIZE_PROP,,}")
           BUFFER_SIZE_LIST="${value}";
           ;;
-        "${NRFILES_PROP}")
+        "${NRFILES_PROP,,}")
           NRFILES_LIST="${value}";
           ;;
-        "${SIZE_PROP}")
+        "${SIZE_PROP,,}")
           SIZE_LIST="${value}";
           ;;
-        "${BLOCK_SIZE_PROP}")
+        "${BLOCK_SIZE_PROP,,}")
           BLOCK_SIZE_LIST="${value}";
           ;;
-        "${REPLICATION_PROP}")
+        "${REPLICATION_PROP,,}")
           REPLICATION_LIST="${value}";
           ;;
-        "${RESULT_PROP}")
+        "${RESULT_DIR_PROP,,}")
           RESULT_DIR="${value}";
           ;;
-        jarFile)
+        "${JAR_FILE_PROP,,}")
           JAR_FILE="${value}";
           ;;
-        java\.home)
+        "${JAVA_HOME_PROP,,}")
           export JAVA_HOME="${value}";
           export PATH="${JAVA_HOME}/bin:${PATH}";
           ;;
-        java\.opts)
+        "${JAVA_OPTS_PROP,,}")
           export JAVA_OPTS="${value}";
           ;;
-        hadoop\.home)
+        "${HADOOP_HOME_PROP,,}")
           export HADOOP_HOME="${value}";
           export PATH="${HADOOP_HOME}/bin:${PATH}";
+          export HADOOP_COMMON_LIB_NATIVE_DIR="${HADOOP_HOME}/lib/native";
+          if [[ -n "${LD_LIBRARY_PATH}" ]];
+          then
+            export LD_LIBRARY_PATH+=":${HADOOP_COMMON_LIB_NATIVE_DIR}";
+          else
+            export LD_LIBRARY_PATH="${HADOOP_COMMON_LIB_NATIVE_DIR}";
+          fi
           ;;
-        hadoop.conf.dir)
+        "${HADOOP_CONF_DIR_PROP,,}")
           export HADOOP_CONF_DIR="${value}";
           ;;
-        yarn\.app\.mapreduce\.am\.log\.level)
+        "${YARN_APP_MAPREDUCE_AM_LOG_LEVEL_PROP,,}")
           YARN_APP_MAPREDUCE_AM_LOG_LEVEL="${value}";
           ;;
-        mapreduce\.job\.maps)
+        "${MAPREDUCE_JOB_MAPS_PROP,,}")
           MAPREDUCE_JOB_MAPS="${value}";
           ;;
-        mapreduce\.job\.running\.map\.limit)
+        "${MAPREDUCE_JOB_RUNNING_MAP_LIMIT_PROP,,}")
           MAPREDUCE_JOB_RUNNING_MAP_LIMIT="${value}";
           ;;
-        mapreduce\.map\.memory\.mb)
+        "${MAPREDUCE_MAP_MEMORY_MB_PROP,,}")
           MAPREDUCE_MAP_MEMORY_MB="${value}";
           ;;
-        mapreduce\.map\.java\.opts)
+        "${MAPREDUCE_MAP_JAVA_OPTS_PROP,,}")
           MAPREDUCE_MAP_JAVA_OPTS="${value}";
           ;;
-        mapreduce\.map\.log\.level)
+        "${MAPREDUCE_MAP_LOG_LEVEL_PROP,,}")
           MAPREDUCE_MAP_LOG_LEVEL="${value}";
           ;;
-        mapreduce\.job\.reduces)
+        "${MAPREDUCE_JOB_REDUCES_PROP,,}")
           MAPREDUCE_JOB_REDUCES="${value}";
           ;;
-        mapreduce\.job\.running\.reduce\.limit)
+        "${MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT_PROP,,}")
           MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT="${value}";
           ;;
-        mapreduce\.reduce\.memory\.mb)
+        "${MAPREDUCE_REDUCE_MEMORY_MB_PROP,,}")
           MAPREDUCE_REDUCE_MEMORY_MB="${value}";
           ;;
-        mapreduce\.reduce\.java\.opts)
+        "${MAPREDUCE_REDUCE_JAVA_OPTS_PROP,,}")
           MAPREDUCE_REDUCE_JAVA_OPTS="${value}";
           ;;
-        mapreduce\.reduce\.log\.level)
+        "${MAPREDUCE_MAP_LOG_LEVEL_PROP}")
           MAPREDUCE_MAP_LOG_LEVEL="${value}";
+          ;;
+        *)
+          echoerr "${errmsg} Unknown key \"${key}\" at line \"${line}\" in properties file \"${propertiesFile}\"";
+          return 1;
           ;;
       esac
     fi
@@ -185,7 +254,7 @@ function checkRequirements {
   fi
   if [[ -z "${RESULT_DIR}" ]];
   then
-    echoerr "${errmsg} \"${RESULT_PROP}\" property is not defined";
+    echoerr "${errmsg} \"${RESULT_DIR_PROP}\" property is not defined";
     return 1;
   else
     if [[ ! -d "${RESULT_DIR}" ]];
@@ -203,32 +272,77 @@ function checkRequirements {
 
 function main {
   getProperties "${1}";
-  shift 1;
+  if [[ ! ${?} -eq 0 ]];
+  then
+    return 1;
+  fi
   checkRequirements;
+  if [[ ! ${?} -eq 0 ]];
+  then
+    return 1;
+  fi
+  local errmsg="ERROR: ${FUNCNAME[0]}:";
+  local err;
+  local base_cmd;
+  local cmd;
+  local operation="${WRITE_PROP} ${READ_PROP}"
   local iOcc=0;
   local iFile;
   local iSize;
   local iBuffer;
   local iBlock;
   local iReplication;
-  while ${iOcc} -lt ${OCCURENCE}
+  local iOp;
+  base_cmd="${YARN_CMD} jar ${JAR_FILE} ${PROGRAM} \
+    -D${YARN_APP_MAPREDUCE_AM_LOG_LEVEL_PROP}=${YARN_APP_MAPREDUCE_AM_LOG_LEVEL} \
+    -D${MAPREDUCE_JOB_MAPS_PROP}=${MAPREDUCE_JOB_MAPS} \
+    -D${MAPREDUCE_JOB_RUNNING_MAP_LIMIT_PROP}=${MAPREDUCE_JOB_RUNNING_MAP_LIMIT} \
+    -D${MAPREDUCE_MAP_MEMORY_MB_PROP}=${MAPREDUCE_MAP_MEMORY_MB} \
+    -D${MAPREDUCE_MAP_JAVA_OPTS_PROP}=${MAPREDUCE_MAP_JAVA_OPTS} \
+    -D${MAPREDUCE_MAP_LOG_LEVEL_PROP}=${MAPREDUCE_MAP_LOG_LEVEL} \
+    -D${MAPREDUCE_JOB_REDUCES_PROP}=${MAPREDUCE_JOB_REDUCES} \
+    -D${MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT_PROP}=${MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT} \
+    -D${MAPREDUCE_REDUCE_MEMORY_MB_PROP}=${MAPREDUCE_REDUCE_MEMORY_MB} \
+    -D${MAPREDUCE_REDUCE_JAVA_OPTS_PROP}=${MAPREDUCE_REDUCE_JAVA_OPTS} \
+    -D${MAPREDUCE_REDUCE_LOG_LEVEL_PROP}=${MAPREDUCE_REDUCE_LOG_LEVEL} \
+    -D${TEST_BUILD_DATA_PROP}=${TEST_BUILD_DATA}";
+  while ${iOcc} -lt ${OCCURENCE};
   do
-    for iFile in ${NRFILES_LIST}
+    for iFile in ${NRFILES_LIST};
     do
-      for iSize in ${SIZE_LIST}
+      for iSize in ${SIZE_LIST};
       do
-        for iBuffer in ${BLOCK_SIZE_LIST}
+        for iBuffer in ${BUFFER_SIZE_LIST};
         do
-          for iBlock in ${BLOCK_SIZE_LIST}
+          for iBlock in ${BLOCK_SIZE_LIST};
           do
-            for iReplication in ${REPLICATION_LIST}
+            for iReplication in ${REPLICATION_LIST};
             do
-              ${YARN_CMD} jar 
+              cmd="${base_cmd} \
+                -D${BLOCK_SIZE_PROP}=${iBlock} \
+                -D${REPLICATION_PROP}=${iReplication} \
+                -${NRFILES_PROP} ${iFile} \
+                -${SIZE_PROP} ${iSize} \
+                -${BUFFER_SIZE_PROP} ${iBuffer}";
+              for iOp in ${operation};
+              do
+                err="$(${cmd} -${iOp} -${RESULT_FILE_PROP} \
+                  ${RESULT_DIR}/${RESULT_FILE_PREFIX}-${NRFILES_PROP}=${iFile}-${SIZE_PROP}=${iSize}-${BUFFER_SIZE_PROP}=${iBuffer}-${BLOCK_SIZE_PROP}=${iBlock}-${REPLICATION_PROP}=${iReplication}-${iOp}.log)";
+                if [[ ! ${?} -eq 0 ]];
+                then
+                  echoerr "${errmsg} ${err}";
+                  return 1;
+                fi
+              done
             done
           done
         done
       done
     done
-    iOcc+=1;
+    iOcc=$((${iOcc}+1));
   done
+  return 0;
 }
+
+main "${@}";
+exit ${?};
