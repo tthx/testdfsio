@@ -285,6 +285,7 @@ function main {
   local err;
   local base_cmd;
   local cmd;
+  local result_file;
   local operation="${WRITE_PROP} ${READ_PROP}"
   local iOcc=0;
   local iFile;
@@ -308,26 +309,36 @@ function main {
     -D${TEST_BUILD_DATA_PROP}=${TEST_BUILD_DATA}";
   while ${iOcc} -lt ${OCCURENCE};
   do
-    for iFile in ${NRFILES_LIST};
+    for iBlock in ${BLOCK_SIZE_LIST};
     do
-      for iSize in ${SIZE_LIST};
+      cmd="${base_cmd} -D${BLOCK_SIZE_PROP}=${iBlock}";
+      result_file="-${RESULT_FILE_PROP} ${RESULT_DIR}/${RESULT_FILE_PREFIX}-${BLOCK_SIZE_PROP}=${iBlock}";
+      for iReplication in ${REPLICATION_LIST};
       do
-        for iBuffer in ${BUFFER_SIZE_LIST};
+        cmd+=" -D${REPLICATION_PROP}=${iReplication}";
+        result_file+="-${REPLICATION_PROP}=${iReplication}";
+        for iFile in ${NRFILES_LIST};
         do
-          for iBlock in ${BLOCK_SIZE_LIST};
+          cmd+=" -${NRFILES_PROP} ${iFile}";
+          result_file+="-${NRFILES_PROP}=${iFile}";
+          for iSize in ${SIZE_LIST};
           do
-            for iReplication in ${REPLICATION_LIST};
+            cmd+=" -${SIZE_PROP} ${iSize}";
+            result_file+="-${SIZE_PROP}=${iSize}";
+            for iBuffer in ${BUFFER_SIZE_LIST};
             do
-              cmd="${base_cmd} \
-                -D${BLOCK_SIZE_PROP}=${iBlock} \
-                -D${REPLICATION_PROP}=${iReplication} \
-                -${NRFILES_PROP} ${iFile} \
-                -${SIZE_PROP} ${iSize} \
-                -${BUFFER_SIZE_PROP} ${iBuffer}";
+              cmd+=" -${BUFFER_SIZE_PROP} ${iBuffer}";
+              result_file+="-${BUFFER_SIZE_PROP}=${iBuffer}";
               for iOp in ${operation};
               do
-                err="$(${cmd} -${iOp} -${RESULT_FILE_PROP} \
-                  ${RESULT_DIR}/${RESULT_FILE_PREFIX}-${NRFILES_PROP}=${iFile}-${SIZE_PROP}=${iSize}-${BUFFER_SIZE_PROP}=${iBuffer}-${BLOCK_SIZE_PROP}=${iBlock}-${REPLICATION_PROP}=${iReplication}-${iOp}.log)";
+                cmd+=" -${iOp}";
+                result_file+="-${iOp}";
+                if [[ "${iOp}" == "${READ_PROP}" ]] && [[ -n "${SHORT_CIRCUIT}" ]];
+                then
+                  cmd+=" -${SHORT_CIRCUIT_PROP}";
+                  result_file+="-${SHORT_CIRCUIT_PROP}";
+                fi
+                err="$(${cmd} ${result_file}.log)";
                 if [[ ! ${?} -eq 0 ]];
                 then
                   echoerr "${errmsg} ${err}";
