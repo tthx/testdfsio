@@ -1,13 +1,17 @@
 !#!bin/bash
 
+nil="nil";
+
 TEST_BUILD_DATA_PROP="test.build.data";
 TEST_BUILD_DATA="";
 RESULT_DIR_PROP="resultDir";
 RESULT_DIR="";
 RESULT_FILE_PROP="resFile";
 RESULT_FILE_PREFIX="TestDFSIO";
-OCCURENCE_PROP="nrOcc";
-OCCURENCE="";
+WRITE_OCCURENCE_PROP="nrOcc.write";
+WRITE_OCCURENCE="";
+READ_OCCURENCE_PROP="nrOcc.read";
+READ_OCCURENCE="";
 NRFILES_PROP="nrFiles";
 NRFILES_LIST="";
 SIZE_PROP="size";
@@ -19,11 +23,11 @@ BLOCK_SIZE_LIST="256m";
 REPLICATION_PROP="replication";
 REPLICATION_LIST="3";
 COMPRESSION_PROP="compression";
-COMPRESSION_LIST="";
+COMPRESSION_LIST="${nil}";
 STORAGE_POLICY_PROP="storagePolicy";
-STORAGE_POLICY_LIST="";
+STORAGE_POLICY_LIST="${nil}";
 ERASURE_CODE_POLICY_PROP="erasureCodePolicy";
-ERASURE_CODE_POLICY_LIST="";
+ERASURE_CODE_POLICY_LIST="${nil}";
 SHORT_CIRCUIT_PROP="shortcircuit";
 SHORT_CIRCUIT="";
 WRITE_PROP="write";
@@ -109,13 +113,13 @@ function getProperties {
       value="$(trim "${value}")";
       case "${key,,}" in
         "${COMPRESSION_PROP,,}")
-          COMPRESSION_LIST="${value}";
+          COMPRESSION_LIST+=" ${value}";
           ;;
         "${STORAGE_POLICY_PROP,,}")
-          STORAGE_POLICY_LIST="${value}";
+          STORAGE_POLICY_LIST+=" ${value}";
           ;;
         "${ERASURE_CODE_POLICY_PROP,,}")
-          ERASURE_CODE_POLICY_LIST="${value}";
+          ERASURE_CODE_POLICY_LIST+=" ${value}";
           ;;
         "${SHORT_CIRCUIT_PROP,,}")
           if [[ "${value,,}" =~ ^[[:space:]]*true[[:space:]]*$ ]] || \
@@ -124,8 +128,11 @@ function getProperties {
             SHORT_CIRCUIT="${value}";
           fi
           ;;
-        "${OCCURENCE_PROP,,}")
-          OCCURENCE="${value}";
+        "${WRITE_OCCURENCE_PROP,,}")
+          WRITE_OCCURENCE="${value}";
+          ;;
+        "${READ_OCCURENCE_PROP,,}")
+          READ_OCCURENCE="${value}";
           ;;
         "${TEST_BUILD_DATA_PROP,,}")
           TEST_BUILD_DATA="${value}";
@@ -232,9 +239,14 @@ function checkRequirements {
     echoerr "${errmsg} File \"${JAR_FILE}\" is not found.";
     return 1;
   fi
-  if [[ -z "${OCCURENCE}" ]];
+  if [[ -z "${WRITE_OCCURENCE}" ]];
   then
-    echoerr "${errmsg} \"${OCCURENCE_PROP}\" property is not defined";
+    echoerr "${errmsg} \"${WRITE_OCCURENCE_PROP}\" property is not defined";
+    return 1;
+  fi
+  if [[ -z "${READ_OCCURENCE}" ]];
+  then
+    echoerr "${errmsg} \"${READ_OCCURENCE_PROP}\" property is not defined";
     return 1;
   fi
   if [[ -z "${TEST_BUILD_DATA}" ]];
@@ -286,13 +298,17 @@ function main {
   local base_cmd;
   local cmd;
   local result_file;
-  local operation="${WRITE_PROP} ${READ_PROP}"
-  local iOcc=0;
+  local operation="${WRITE_PROP} ${READ_PROP}";
+  local iOcc_write=0;
+  local iOcc_read;
   local iFile;
   local iSize;
   local iBuffer;
   local iBlock;
   local iReplication;
+  local iStorage;
+  local iErasureCode;
+  local iCompression;
   local iOp;
   base_cmd="${YARN_CMD} jar ${JAR_FILE} ${PROGRAM} \
     -D${YARN_APP_MAPREDUCE_AM_LOG_LEVEL_PROP}=${YARN_APP_MAPREDUCE_AM_LOG_LEVEL} \
@@ -307,7 +323,7 @@ function main {
     -D${MAPREDUCE_REDUCE_JAVA_OPTS_PROP}=${MAPREDUCE_REDUCE_JAVA_OPTS} \
     -D${MAPREDUCE_REDUCE_LOG_LEVEL_PROP}=${MAPREDUCE_REDUCE_LOG_LEVEL} \
     -D${TEST_BUILD_DATA_PROP}=${TEST_BUILD_DATA}";
-  while ${iOcc} -lt ${OCCURENCE};
+  while ${iOcc_write} -lt ${WRITE_OCCURENCE};
   do
     for iBlock in ${BLOCK_SIZE_LIST};
     do
@@ -329,28 +345,80 @@ function main {
             do
               cmd+=" -${BUFFER_SIZE_PROP} ${iBuffer}";
               result_file+="-${BUFFER_SIZE_PROP}=${iBuffer}";
-              for iOp in ${operation};
+              for iStorage in ${STORAGE_POLICY_LIST};
               do
-                cmd+=" -${iOp}";
-                result_file+="-${iOp}";
-                if [[ "${iOp}" == "${READ_PROP}" ]] && [[ -n "${SHORT_CIRCUIT}" ]];
+                if [[ "${iStorage}" != "${nil}" ]];
                 then
-                  cmd+=" -${SHORT_CIRCUIT_PROP}";
-                  result_file+="-${SHORT_CIRCUIT_PROP}";
+                  cmd+=" -${STORAGE_POLICY_PROP} ${iStorage}";
+                  result_file+="-${STORAGE_POLICY_PROP}=${iStorage}";
                 fi
-                err="$(${cmd} ${result_file}.log)";
-                if [[ ! ${?} -eq 0 ]];
-                then
-                  echoerr "${errmsg} ${err}";
-                  return 1;
-                fi
+                for iCompression in ${COMPRESSION_LIST};
+                do
+                  if [[ "${iCompression}" != "${nil}" ]];
+                  then
+                    cmd+=" -${COMPRESSION_PROP} ${iCompression}";
+                    result_file+="-${COMPRESSION_PROP}=${iCompression}";
+                  fi
+                  for iErasureCode in ${ERASURE_CODE_POLICY_LIST};
+                  do
+                    if [[ "${iErasureCode}" != "${nil}" ]];
+                    then
+                      cmd+=" -${ERASURE_CODE_POLICY_PROP} ${iErasureCode}";
+                      result_file+="-${ERASURE_CODE_POLICY_PROP}=${iErasureCode}";
+                    fi
+                    for iOp in ${operation};
+                    do
+                      cmd+=" -${iOp}";
+                      result_file+="-${iOp}";
+                      case "${iOp}" in
+                        "${WRITE_PROP}")
+                          err="$(${cmd} ${result_file}.log)";
+                          if [[ ! ${?} -eq 0 ]];
+                          then
+                            echoerr "${errmsg} ${err}";
+                            return 1;
+                          fi
+                          ;;
+                        "${READ_PROP}")
+                          iOcc_read=0;
+                          while ${iOcc_read} -lt ${READ_OCCURENCE};
+                          do
+                            err="$(${cmd} ${result_file}.log)";
+                            if [[ ! ${?} -eq 0 ]];
+                            then
+                              echoerr "${errmsg} ${err}";
+                              return 1;
+                            fi
+                            iOcc_read=$((${iOcc_read}+1));
+                          done
+                          if [[ -n "${SHORT_CIRCUIT}" ]] && \
+                            [[ "${iCompression}" == "${nil}" ]];
+                          then
+                            cmd+=" -${SHORT_CIRCUIT_PROP}";
+                            result_file+="-${SHORT_CIRCUIT_PROP}";iOcc_read=0;
+                            while ${iOcc_read} -lt ${READ_OCCURENCE};
+                            do
+                              err="$(${cmd} ${result_file}.log)";
+                              if [[ ! ${?} -eq 0 ]];
+                              then
+                                echoerr "${errmsg} ${err}";
+                                return 1;
+                              fi
+                              iOcc_read=$((${iOcc_read}+1));
+                            done
+                          fi
+                          ;;
+                      esac
+                    done
+                  done
+                done
               done
             done
           done
         done
       done
     done
-    iOcc=$((${iOcc}+1));
+    iOcc_write=$((${iOcc_write}+1));
   done
   return 0;
 }
