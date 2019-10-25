@@ -18,9 +18,9 @@ SIZE_PROP="size";
 SIZE_LIST="";
 BUFFER_SIZE_PROP="bufferSize";
 BUFFER_SIZE_LIST="4096";
-BLOCK_SIZE_PROP="blockSize";
+BLOCK_SIZE_PROP="dfs.blocksize";
 BLOCK_SIZE_LIST="256m";
-REPLICATION_PROP="replication";
+REPLICATION_PROP="dfs.replication";
 REPLICATION_LIST="3";
 COMPRESSION_PROP="compression";
 COMPRESSION_LIST="${nil}";
@@ -53,7 +53,7 @@ MAPREDUCE_JOB_MAPS="2";
 MAPREDUCE_JOB_RUNNING_MAP_LIMIT_PROP="mapreduce.job.running.map.limit";
 MAPREDUCE_JOB_RUNNING_MAP_LIMIT="0";
 MAPREDUCE_MAP_MEMORY_MB_PROP="mapreduce.map.memory.mb";
-MAPREDUCE_MAP_MEMORY_MB="1g";
+MAPREDUCE_MAP_MEMORY_MB="1024";
 MAPREDUCE_MAP_JAVA_OPTS_PROP="mapreduce.map.java.opts";
 MAPREDUCE_MAP_JAVA_OPTS="-XX:+UseG1GC";
 MAPREDUCE_MAP_LOG_LEVEL_PROP="mapreduce.map.log.level";
@@ -64,7 +64,7 @@ MAPREDUCE_JOB_REDUCES="1";
 MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT_PROP="mapreduce.job.running.reduce.limit";
 MAPREDUCE_JOB_RUNNING_REDUCE_LIMIT="0";
 MAPREDUCE_REDUCE_MEMORY_MB_PROP="mapreduce.reduce.memory.mb";
-MAPREDUCE_REDUCE_MEMORY_MB="1g";
+MAPREDUCE_REDUCE_MEMORY_MB="1024";
 MAPREDUCE_REDUCE_JAVA_OPTS_PROP="mapreduce.reduce.java.opts";
 MAPREDUCE_REDUCE_JAVA_OPTS="-XX:+UseG1GC";
 MAPREDUCE_REDUCE_LOG_LEVEL_PROP="mapreduce.reduce.log.level";
@@ -294,8 +294,8 @@ function main {
   local base_cmd;
   local cmd;
   local result_file;
-  local operation="${WRITE_PROP} ${READ_PROP}";
-  local iOcc_write=0;
+  local operation;
+  local iOcc_write;
   local iOcc_read;
   local iFile;
   local iSize;
@@ -306,6 +306,8 @@ function main {
   local iErasureCode;
   local iCompression;
   local iOp;
+  local cmd_up;
+  local result_file_up;
   base_cmd="${YARN_CMD} jar ${JAR_FILE} ${PROGRAM} \
     -D${YARN_APP_MAPREDUCE_AM_LOG_LEVEL_PROP}=${YARN_APP_MAPREDUCE_AM_LOG_LEVEL} \
     -D${MAPREDUCE_JOB_MAPS_PROP}=${MAPREDUCE_JOB_MAPS} \
@@ -319,55 +321,58 @@ function main {
     -D${MAPREDUCE_REDUCE_JAVA_OPTS_PROP}=${MAPREDUCE_REDUCE_JAVA_OPTS} \
     -D${MAPREDUCE_REDUCE_LOG_LEVEL_PROP}=${MAPREDUCE_REDUCE_LOG_LEVEL} \
     -D${TEST_BUILD_DATA_PROP}=${TEST_BUILD_DATA}";
-  while ${iOcc_write} -lt ${WRITE_OCCURENCE};
+  operation="${WRITE_PROP} ${READ_PROP}";
+  iOcc_write=0;
+  while [[ ${iOcc_write} -lt ${WRITE_OCCURENCE} ]];
   do
     for iBlock in ${BLOCK_SIZE_LIST};
     do
-      cmd="${base_cmd} -D${BLOCK_SIZE_PROP}=${iBlock}";
-      result_file="-${RESULT_FILE_PROP} ${RESULT_DIR}/${RESULT_FILE_PREFIX}-${BLOCK_SIZE_PROP}=${iBlock}";
       for iReplication in ${REPLICATION_LIST};
       do
-        cmd+=" -D${REPLICATION_PROP}=${iReplication}";
-        result_file+="-${REPLICATION_PROP}=${iReplication}";
         for iFile in ${NRFILES_LIST};
         do
-          cmd+=" -${NRFILES_PROP} ${iFile}";
-          result_file+="-${NRFILES_PROP}=${iFile}";
           for iSize in ${SIZE_LIST};
           do
-            cmd+=" -${SIZE_PROP} ${iSize}";
-            result_file+="-${SIZE_PROP}=${iSize}";
             for iBuffer in ${BUFFER_SIZE_LIST};
             do
-              cmd+=" -${BUFFER_SIZE_PROP} ${iBuffer}";
-              result_file+="-${BUFFER_SIZE_PROP}=${iBuffer}";
               for iStorage in ${STORAGE_POLICY_LIST};
               do
-                if [[ "${iStorage}" != "${nil}" ]];
-                then
-                  cmd+=" -${STORAGE_POLICY_PROP} ${iStorage}";
-                  result_file+="-${STORAGE_POLICY_PROP}=${iStorage}";
-                fi
                 for iCompression in ${COMPRESSION_LIST};
                 do
-                  if [[ "${iCompression}" != "${nil}" ]];
-                  then
-                    cmd+=" -${COMPRESSION_PROP} ${iCompression}";
-                    result_file+="-${COMPRESSION_PROP}=${iCompression}";
-                  fi
                   for iErasureCode in ${ERASURE_CODE_POLICY_LIST};
                   do
-                    if [[ "${iErasureCode}" != "${nil}" ]];
-                    then
-                      cmd+=" -${ERASURE_CODE_POLICY_PROP} ${iErasureCode}";
-                      result_file+="-${ERASURE_CODE_POLICY_PROP}=${iErasureCode}";
-                    fi
                     for iOp in ${operation};
                     do
+                      cmd_up="${base_cmd} \
+                        -D${BLOCK_SIZE_PROP}=${iBlock} \
+                        -D${REPLICATION_PROP}=${iReplication} \
+                        -${NRFILES_PROP} ${iFile} \
+                        -${SIZE_PROP} ${iSize} \
+                        -${BUFFER_SIZE_PROP} ${iBuffer}";
+                      result_file_up="-${RESULT_FILE_PROP} \
+                        ${RESULT_DIR}/${RESULT_FILE_PREFIX}-${BLOCK_SIZE_PROP}=${iBlock}-${REPLICATION_PROP}=${iReplication}-${NRFILES_PROP}=${iFile}-${SIZE_PROP}=${iSize}-${BUFFER_SIZE_PROP}=${iBuffer}";
+                      cmd="${cmd_up}";
+                      result_file="${result_file_up}";
+                      if [[ "${iStorage}" != "${nil}" ]];
+                      then
+                        cmd+=" -${STORAGE_POLICY_PROP} ${iStorage}";
+                        result_file+="-${STORAGE_POLICY_PROP}=${iStorage}";
+                      fi
+                      if [[ "${iCompression}" != "${nil}" ]];
+                      then
+                        cmd+=" -${COMPRESSION_PROP} ${iCompression}";
+                        result_file+="-${COMPRESSION_PROP}=${iCompression}";
+                      fi
+                      if [[ "${iErasureCode}" != "${nil}" ]];
+                      then
+                        cmd+=" -${ERASURE_CODE_POLICY_PROP} ${iErasureCode}";
+                        result_file+="-${ERASURE_CODE_POLICY_PROP}=${iErasureCode}";
+                      fi
                       cmd+=" -${iOp}";
                       result_file+="-${iOp}";
                       case "${iOp}" in
                         "${WRITE_PROP}")
+                          echo "${iOp}: $((iOcc_write+1))/${WRITE_OCCURENCE}";
                           err="$(${cmd} ${result_file}.log 2>&1)";
                           if [[ ! ${?} -eq 0 ]];
                           then
@@ -377,8 +382,9 @@ function main {
                           ;;
                         "${READ_PROP}")
                           iOcc_read=0;
-                          while ${iOcc_read} -lt ${READ_OCCURENCE};
+                          while [[ ${iOcc_read} -lt ${READ_OCCURENCE} ]];
                           do
+                            echo "${iOp}: $((iOcc_read+1))/${READ_OCCURENCE} for $((iOcc_write+1))/${WRITE_OCCURENCE} write occurence";
                             err="$(${cmd} ${result_file}.log 2>&1)";
                             if [[ ! ${?} -eq 0 ]];
                             then
@@ -391,8 +397,9 @@ function main {
                             [[ "${iCompression}" == "${nil}" ]];
                           then
                             cmd+=" -${SHORT_CIRCUIT_PROP}";
-                            result_file+="-${SHORT_CIRCUIT_PROP}";iOcc_read=0;
-                            while ${iOcc_read} -lt ${READ_OCCURENCE};
+                            result_file+="-${SHORT_CIRCUIT_PROP}";
+                            iOcc_read=0;
+                            while [[ ${iOcc_read} -lt ${READ_OCCURENCE} ]];
                             do
                               err="$(${cmd} ${result_file}.log 2>&1)";
                               if [[ ! ${?} -eq 0 ]];
