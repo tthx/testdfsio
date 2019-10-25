@@ -31,7 +31,7 @@ ERASURE_CODE_POLICY_LIST="${nil}";
 SHORT_CIRCUIT_PROP="shortcircuit";
 SHORT_CIRCUIT="";
 WRITE_PROP="write";
-READ_PROP="";
+READ_PROP="read";
 
 JAR_FILE_PROP="jarFile";
 JAR_FILE="TestDFSIO-0.0.1.jar";
