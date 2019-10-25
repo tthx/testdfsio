@@ -1,4 +1,4 @@
-!#!bin/bash
+#!/bin/bash
 
 nil="nil";
 
@@ -87,11 +87,6 @@ function getProperties {
   local line;
   local key;
   local value;
-  local bufferSizeList="";
-  local fileList="";
-  local sizeList="";
-  local blockSizeList="";
-  local replicationList="";
   if [[ ! -f "${propertiesFile}" ]];
   then
     echoerr "${errmsg} File \"${propertiesFile}\" was not found.";
@@ -100,7 +95,7 @@ function getProperties {
   line=0;
   while IFS='=' read -r key value;
   do
-    line=$((${line}+1));
+    line=$((line+1));
     if [[ ! "${key}" =~ ^[[:space:]]*#+(.*)?$ ]] && [[ -n "${key}" ]];
     then
       if [[ -z "${value}" ]];
@@ -224,6 +219,7 @@ function getProperties {
 
 function checkRequirements {
   local errmsg="ERROR: ${FUNCNAME[0]}:";
+  local err;
   if [[ -z "$(which ${JAVA_CMD})" ]];
   then
     echoerr "${errmsg} \"${JAVA_CMD}\" command is not found in PATH";
@@ -271,10 +267,10 @@ function checkRequirements {
   else
     if [[ ! -d "${RESULT_DIR}" ]];
     then
-      mkdir -p "${RESULT_DIR}";
+      err="$(mkdir -p "${RESULT_DIR}" 2>&1)";
       if [[ ! ${?} -eq 0 ]];
       then
-        echoerr "${errmsg} Unable to create directory \"${RESULT_DIR}\"";
+        echoerr "${errmsg} Unable to create directory \"${RESULT_DIR}\": ${err}";
         return 1;
       fi
     fi
@@ -372,7 +368,7 @@ function main {
                       result_file+="-${iOp}";
                       case "${iOp}" in
                         "${WRITE_PROP}")
-                          err="$(${cmd} ${result_file}.log)";
+                          err="$(${cmd} ${result_file}.log 2>&1)";
                           if [[ ! ${?} -eq 0 ]];
                           then
                             echoerr "${errmsg} ${err}";
@@ -383,13 +379,13 @@ function main {
                           iOcc_read=0;
                           while ${iOcc_read} -lt ${READ_OCCURENCE};
                           do
-                            err="$(${cmd} ${result_file}.log)";
+                            err="$(${cmd} ${result_file}.log 2>&1)";
                             if [[ ! ${?} -eq 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
                               return 1;
                             fi
-                            iOcc_read=$((${iOcc_read}+1));
+                            iOcc_read=$((iOcc_read+1));
                           done
                           if [[ -n "${SHORT_CIRCUIT}" ]] && \
                             [[ "${iCompression}" == "${nil}" ]];
@@ -398,13 +394,13 @@ function main {
                             result_file+="-${SHORT_CIRCUIT_PROP}";iOcc_read=0;
                             while ${iOcc_read} -lt ${READ_OCCURENCE};
                             do
-                              err="$(${cmd} ${result_file}.log)";
+                              err="$(${cmd} ${result_file}.log 2>&1)";
                               if [[ ! ${?} -eq 0 ]];
                               then
                                 echoerr "${errmsg} ${err}";
                                 return 1;
                               fi
-                              iOcc_read=$((${iOcc_read}+1));
+                              iOcc_read=$((iOcc_read+1));
                             done
                           fi
                           ;;
@@ -418,7 +414,7 @@ function main {
         done
       done
     done
-    iOcc_write=$((${iOcc_write}+1));
+    iOcc_write=$((iOcc_write+1));
   done
   return 0;
 }
