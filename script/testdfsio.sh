@@ -401,6 +401,7 @@ function main {
                             iOcc_read=0;
                             while [[ ${iOcc_read} -lt ${READ_OCCURENCE} ]];
                             do
+                              echo "${iOp} with short circuit: $((iOcc_read+1))/${READ_OCCURENCE} for $((iOcc_write+1))/${WRITE_OCCURENCE} write occurence";
                               err="$(${cmd} ${result_file}.log 2>&1)";
                               if [[ ! ${?} -eq 0 ]];
                               then
