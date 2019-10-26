@@ -72,6 +72,8 @@ MAPREDUCE_REDUCE_LOG_LEVEL="INFO";
 
 function echoerr { printf "%s\n" "${@}" >&2; }
 
+function countWord { printf "%s" ${#}; }
+
 function trim() {
   local var="${*}";
   # remove leading whitespace characters
@@ -220,12 +222,12 @@ function getProperties {
 function checkRequirements {
   local errmsg="ERROR: ${FUNCNAME[0]}:";
   local err;
-  if [[ -z "$(which ${JAVA_CMD})" ]];
+  if [[ -z "$(command -v ${JAVA_CMD})" ]];
   then
     echoerr "${errmsg} \"${JAVA_CMD}\" command is not found in PATH";
     return 1;
   fi
-  if [[ -z "$(which ${YARN_CMD})" ]];
+  if [[ -z "$(command -v ${YARN_CMD})" ]];
   then
     echoerr "${errmsg} \"${YARN_CMD}\" command is not found in PATH";
     return 1;
@@ -297,6 +299,8 @@ function main {
   local operation;
   local iOcc_write;
   local iOcc_read;
+  local nrOcc;
+  local iOcc;
   local iFile;
   local iSize;
   local iBuffer;
@@ -306,8 +310,7 @@ function main {
   local iErasureCode;
   local iCompression;
   local iOp;
-  local cmd_up;
-  local result_file_up;
+  local parameters;
   base_cmd="${YARN_CMD} jar ${JAR_FILE} ${PROGRAM} \
     -D${YARN_APP_MAPREDUCE_AM_LOG_LEVEL_PROP}=${YARN_APP_MAPREDUCE_AM_LOG_LEVEL} \
     -D${MAPREDUCE_JOB_MAPS_PROP}=${MAPREDUCE_JOB_MAPS} \
@@ -323,6 +326,21 @@ function main {
     -D${TEST_BUILD_DATA_PROP}=${TEST_BUILD_DATA}";
   operation="${WRITE_PROP} ${READ_PROP}";
   iOcc_write=0;
+  nrOcc=$(($(countWord ${STORAGE_POLICY_LIST})* \
+    $(countWord ${ERASURE_CODE_POLICY_LIST})* \
+    $(countWord ${BUFFER_SIZE_LIST})* \
+    $(countWord ${NRFILES_LIST})* \
+    $(countWord ${SIZE_LIST})* \
+    $(countWord ${BLOCK_SIZE_LIST})* \
+    $(countWord ${REPLICATION_LIST})* \
+    WRITE_OCCURENCE));
+  iOcc=0;
+  if [[ -n "${SHORT_CIRCUIT}" ]];
+  then
+    iOcc=$((nrOcc*READ_OCCURENCE));
+  fi
+  nrOcc=$(((nrOcc*$(countWord ${COMPRESSION_LIST})*READ_OCCURENCE)+iOcc));
+  iOcc=1;
   while [[ ${iOcc_write} -lt ${WRITE_OCCURENCE} ]];
   do
     for iBlock in ${BLOCK_SIZE_LIST};
@@ -343,16 +361,15 @@ function main {
                   do
                     for iOp in ${operation};
                     do
-                      cmd_up="${base_cmd} \
+                      cmd="${base_cmd} \
                         -D${BLOCK_SIZE_PROP}=${iBlock} \
                         -D${REPLICATION_PROP}=${iReplication} \
                         -${NRFILES_PROP} ${iFile} \
                         -${SIZE_PROP} ${iSize} \
                         -${BUFFER_SIZE_PROP} ${iBuffer}";
-                      result_file_up="-${RESULT_FILE_PROP} \
+                      result_file="-${RESULT_FILE_PROP} \
                         ${RESULT_DIR}/${RESULT_FILE_PREFIX}-${BLOCK_SIZE_PROP}=${iBlock}-${REPLICATION_PROP}=${iReplication}-${NRFILES_PROP}=${iFile}-${SIZE_PROP}=${iSize}-${BUFFER_SIZE_PROP}=${iBuffer}";
-                      cmd="${cmd_up}";
-                      result_file="${result_file_up}";
+                      parameters="blk:${iBlock},rep:${iReplication},nrf:${iFile},size:${iSize},buf:${iBuffer},stopol:${iStorage},zip:${iCompression},ec:${iErasureCode}";
                       if [[ "${iStorage}" != "${nil}" ]];
                       then
                         cmd+=" -${STORAGE_POLICY_PROP} ${iStorage}";
@@ -372,7 +389,8 @@ function main {
                       result_file+="-${iOp}";
                       case "${iOp}" in
                         "${WRITE_PROP}")
-                          echo "${iOp}: $((iOcc_write+1))/${WRITE_OCCURENCE}";
+                          echo "Progression: ${iOcc}/${nrOcc}: ${iOp},${parameters}";
+                          iOcc=$((iOcc+1));
                           err="$(${cmd} ${result_file}.log 2>&1)";
                           if [[ ! ${?} -eq 0 ]];
                           then
@@ -384,7 +402,8 @@ function main {
                           iOcc_read=0;
                           while [[ ${iOcc_read} -lt ${READ_OCCURENCE} ]];
                           do
-                            echo "${iOp}: $((iOcc_read+1))/${READ_OCCURENCE} for $((iOcc_write+1))/${WRITE_OCCURENCE} write occurence";
+                            echo "Progression: ${iOcc}/${nrOcc}: ${iOp},${parameters}";
+                            iOcc=$((iOcc+1));
                             err="$(${cmd} ${result_file}.log 2>&1)";
                             if [[ ! ${?} -eq 0 ]];
                             then
@@ -401,7 +420,8 @@ function main {
                             iOcc_read=0;
                             while [[ ${iOcc_read} -lt ${READ_OCCURENCE} ]];
                             do
-                              echo "${iOp} with short circuit: $((iOcc_read+1))/${READ_OCCURENCE} for $((iOcc_write+1))/${WRITE_OCCURENCE} write occurence";
+                              echo "Progression: ${iOcc}/${nrOcc}: ${iOp},short,${parameters}";
+                              iOcc=$((iOcc+1));
                               err="$(${cmd} ${result_file}.log 2>&1)";
                               if [[ ! ${?} -eq 0 ]];
                               then
