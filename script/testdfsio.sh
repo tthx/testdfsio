@@ -110,13 +110,13 @@ function getProperties {
       value="$(trim "${value}")";
       case "${key,,}" in
         "${COMPRESSION_PROP,,}")
-          COMPRESSION_LIST+=" ${value}";
+          COMPRESSION_LIST="${value}";
           ;;
         "${STORAGE_POLICY_PROP,,}")
-          STORAGE_POLICY_LIST+=" ${value}";
+          STORAGE_POLICY_LIST="${value}";
           ;;
         "${ERASURE_CODE_POLICY_PROP,,}")
-          ERASURE_CODE_POLICY_LIST+=" ${value}";
+          ERASURE_CODE_POLICY_LIST="${value}";
           ;;
         "${SHORT_CIRCUIT_PROP,,}")
           if [[ "${value,,}" =~ ^[[:space:]]*true[[:space:]]*$ ]] || \
@@ -296,7 +296,7 @@ function main {
   local base_cmd;
   local cmd;
   local result_file;
-  local operation;
+  local operation_list;
   local iOcc_write;
   local iOcc_read;
   local nrOcc;
@@ -324,8 +324,7 @@ function main {
     -D${MAPREDUCE_REDUCE_JAVA_OPTS_PROP}=${MAPREDUCE_REDUCE_JAVA_OPTS} \
     -D${MAPREDUCE_REDUCE_LOG_LEVEL_PROP}=${MAPREDUCE_REDUCE_LOG_LEVEL} \
     -D${TEST_BUILD_DATA_PROP}=${TEST_BUILD_DATA}";
-  operation="${WRITE_PROP} ${READ_PROP}";
-  iOcc_write=0;
+  operation_list="${WRITE_PROP} ${READ_PROP}";
   nrOcc=$(($(countWord ${STORAGE_POLICY_LIST})* \
     $(countWord ${ERASURE_CODE_POLICY_LIST})* \
     $(countWord ${BUFFER_SIZE_LIST})* \
@@ -339,8 +338,9 @@ function main {
   then
     iOcc=$((nrOcc*READ_OCCURENCE));
   fi
-  nrOcc=$(((nrOcc*$(countWord ${COMPRESSION_LIST})*READ_OCCURENCE)+iOcc));
+  nrOcc=$((((nrOcc*$(countWord ${COMPRESSION_LIST}))*(1+READ_OCCURENCE))+iOcc));
   iOcc=1;
+  iOcc_write=0;
   while [[ ${iOcc_write} -lt ${WRITE_OCCURENCE} ]];
   do
     for iBlock in ${BLOCK_SIZE_LIST};
@@ -359,7 +359,7 @@ function main {
                 do
                   for iErasureCode in ${ERASURE_CODE_POLICY_LIST};
                   do
-                    for iOp in ${operation};
+                    for iOp in ${operation_list};
                     do
                       cmd="${base_cmd} \
                         -D${BLOCK_SIZE_PROP}=${iBlock} \
