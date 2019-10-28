@@ -2,6 +2,7 @@
 
 NIL="nil";
 
+# General properties
 TEST_BUILD_DATA_PROP="test.build.data";
 TEST_BUILD_DATA="/tmp";
 RESULT_DIR_PROP="resultDir";
@@ -10,25 +11,6 @@ RESULT_FILE_PROP="resFile";
 RESULT_FILE_PREFIX="TestDFSIO";
 OPERATION_PROP="operation";
 OPERATION_LIST="";
-WRITE_PROP="write";
-APPEND_PROP="append";
-TRUNCATE_PROP="truncate";
-RESIZE_PROP="resize";
-WRITE_OCCURENCE_PROP="nrOcc.write";
-RESIZE_OCCURENCE_PROP="nrOcc.write";
-WRITE_OCCURENCE="0";
-RESIZE_OCCURENCE="0";
-RESIZE_LIST_PROP="resize.size";
-RESIZE_LIST="";
-READ_PROP="read";
-RANDOM_PROP="random";
-BACKWARD_PROP="backward";
-SKIP_PROP="skip";
-SHORT_CIRCUIT_PROP="shortcircuit";
-READ_OCCURENCE_PROP="nrOcc.read";
-READ_OCCURENCE="0";
-SKIP_SIZE_PROP="skipSize";
-SKIP_SIZE_LIST="";
 NRFILES_PROP="nrFiles";
 NRFILES_LIST="";
 SIZE_PROP="size";
@@ -46,20 +28,46 @@ STORAGE_POLICY_LIST="${NIL}";
 ERASURE_CODE_POLICY_PROP="erasureCodePolicy";
 ERASURE_CODE_POLICY_LIST="${NIL}";
 
+# Write properties
+WRITE_PROP="write";
+APPEND_PROP="append";
+TRUNCATE_PROP="truncate";
+RESIZE_PROP="resize";
+WRITE_OCCURENCE_PROP="nrOcc.write";
+WRITE_OCCURENCE="0";
+RESIZE_OCCURENCE_PROP="nrOcc.resize";
+RESIZE_OCCURENCE="0";
+RESIZE_LIST_PROP="resize.size";
+RESIZE_LIST="";
+
+# Read properties
+READ_PROP="read";
+RANDOM_PROP="random";
+BACKWARD_PROP="backward";
+SKIP_PROP="skip";
+SHORT_CIRCUIT_PROP="shortcircuit";
+READ_OCCURENCE_PROP="nrOcc.read";
+READ_OCCURENCE="0";
+SKIP_SIZE_PROP="skipSize";
+SKIP_SIZE_LIST="";
+
+# Java properties
+JAVA_HOME_PROP="java.home";
+JAVA_OPTS_PROP="java.opts";
+JAVA_CMD="java";
 JAR_FILE_PROP="jarFile";
 JAR_FILE="TestDFSIO-0.0.1.jar";
 PROGRAM="com.orange.tgi.ols.arsec.paas.aacm.benchmarks.TestDFSIO";
 
-JAVA_HOME_PROP="java.home";
-JAVA_OPTS_PROP="java.opts";
-JAVA_CMD="java";
-
+# Hadoop properties
 HADOOP_HOME_PROP="hadoop.home";
 HADOOP_CONF_DIR_PROP="hadoop.conf.dir";
 YARN_CMD="yarn";
 
+# Application Master properties
 YARN_APP_MAPREDUCE_AM_LOG_LEVEL_PROP="yarn.app.mapreduce.am.log.level";
 YARN_APP_MAPREDUCE_AM_LOG_LEVEL="INFO";
+
 # Map tasks properties
 MAPREDUCE_JOB_MAPS_PROP="mapreduce.job.maps";
 MAPREDUCE_JOB_MAPS="2";
@@ -71,6 +79,7 @@ MAPREDUCE_MAP_JAVA_OPTS_PROP="mapreduce.map.java.opts";
 MAPREDUCE_MAP_JAVA_OPTS="-XX:+UseG1GC";
 MAPREDUCE_MAP_LOG_LEVEL_PROP="mapreduce.map.log.level";
 MAPREDUCE_MAP_LOG_LEVEL="INFO";
+
 # Reducer tasks properties
 MAPREDUCE_JOB_REDUCES_PROP="mapreduce.job.reduces";
 MAPREDUCE_JOB_REDUCES="1";
@@ -90,7 +99,7 @@ function countWord { printf "%d" ${#}; }
 function inList {
   local x="${1}";
   shift 1;
-  local list="${@}";
+  local list="${*}";
   local i;
   for i in ${list};
   do
@@ -142,14 +151,14 @@ function getProperties {
           OPERATION_LIST="${value}";
           for i in ${OPERATION_LIST};
           do
-            if [[ ! $(inList ${i} \
-                      ${WRITE_PROP} \
-                      ${RESIZE_PROP} \
-                      ${READ_PROP} \
-                      ${BACKWARD_PROP} \
-                      ${RANDOM_PROP} \
-                      ${SKIP_PROP} \
-                      ${SHORT_CIRCUIT_PROP}) -eq 0 ]];
+            if [[ $(inList "${i}" \
+                    "${WRITE_PROP}" \
+                    "${RESIZE_PROP}" \
+                    "${READ_PROP}" \
+                    "${BACKWARD_PROP}" \
+                    "${RANDOM_PROP}" \
+                    "${SKIP_PROP}" \
+                    "${SHORT_CIRCUIT_PROP}") -gt 0 ]];
             then
               echoerr "${errmsg} Operation \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -166,13 +175,14 @@ function getProperties {
           COMPRESSION_LIST="${value}";
           for i in ${COMPRESSION_LIST};
           do
-            if [[ ! $(inList ${i} \
-                      "org.apache.hadoop.io.compress.BZip2Codec" \
-                      "org.apache.hadoop.io.compress.DefaultCodec" \
-                      "org.apache.hadoop.io.compress.DeflateCodec" \
-                      "org.apache.hadoop.io.compress.GzipCodec" \
-                      "org.apache.hadoop.io.compress.Lz4Codec" \
-                      "org.apache.hadoop.io.compress.SnappyCodec") -eq 0 ]];
+            if [[ $(inList "${i}" \
+                    "${NIL}" \
+                    "org.apache.hadoop.io.compress.BZip2Codec" \
+                    "org.apache.hadoop.io.compress.DefaultCodec" \
+                    "org.apache.hadoop.io.compress.DeflateCodec" \
+                    "org.apache.hadoop.io.compress.GzipCodec" \
+                    "org.apache.hadoop.io.compress.Lz4Codec" \
+                    "org.apache.hadoop.io.compress.SnappyCodec") -gt 0 ]];
             then
               echoerr "${errmsg} Compression codec \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -183,14 +193,15 @@ function getProperties {
           STORAGE_POLICY_LIST="${value}";
           for i in ${STORAGE_POLICY_LIST};
           do
-            if [[ ! $(inList ${i} \
-                      "PROVIDED" \
-                      "COLD" \
-                      "WARM" \
-                      "HOT" \
-                      "ONE_SSD" \
-                      "ALL_SSD" \
-                      "LAZY_PERSIST") -eq 0 ]];
+            if [[ $(inList "${i}" \
+                    "${NIL}" \
+                    "PROVIDED" \
+                    "COLD" \
+                    "WARM" \
+                    "HOT" \
+                    "ONE_SSD" \
+                    "ALL_SSD" \
+                    "LAZY_PERSIST") -gt 0 ]];
             then
               echoerr "${errmsg} Storage policy \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -201,12 +212,13 @@ function getProperties {
           ERASURE_CODE_POLICY_LIST="${value}";
           for i in ${ERASURE_CODE_POLICY_LIST};
           do
-            if [[ ! $(inList ${i} \
-                      "RS-10-4-1024k" \
-                      "RS-3-2-1024k" \
-                      "RS-6-3-1024k" \
-                      "RS-LEGACY-6-3-1024k" \
-                      "XOR-2-1-1024k") -eq 0 ]];
+            if [[ $(inList "${i}" \
+                    "${NIL}" \
+                    "RS-10-4-1024k" \
+                    "RS-3-2-1024k" \
+                    "RS-6-3-1024k" \
+                    "RS-LEGACY-6-3-1024k" \
+                    "XOR-2-1-1024k") -gt 0 ]];
             then
               echoerr "${errmsg} Erasure coding policy \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -341,13 +353,13 @@ function checkRequirements {
   if [[ ! -d "${RESULT_DIR}" ]];
   then
     err="$(mkdir -p "${RESULT_DIR}" 2>&1)";
-    if [[ ! ${?} -eq 0 ]];
+    if [[ ${?} -gt 0 ]];
     then
       echoerr "${errmsg} Unable to create directory \"${RESULT_DIR}\": ${err}";
       return 1;
     fi
   fi
-  if [[ $(inList ${RESIZE_PROP} ${OPERATION_LIST}) -eq 0 ]];
+  if [[ $(inList ${RESIZE_PROP} ${OPERATION_LIST}) -gt 0 ]];
   then
     if [[ -z "${RESIZE_LIST_PROP}" ]];
     then
@@ -355,7 +367,7 @@ function checkRequirements {
       return 1;
     fi
   fi
-  if [[ $(inList ${SKIP_PROP} ${OPERATION_LIST}) -eq 0 ]];
+  if [[ $(inList ${SKIP_PROP} ${OPERATION_LIST}) -gt 0 ]];
   then
     if [[ -z "${SKIP_SIZE_LIST}" ]];
     then
@@ -368,12 +380,12 @@ function checkRequirements {
 
 function main {
   getProperties "${1}";
-  if [[ ! ${?} -eq 0 ]];
+  if [[ ${?} -gt 0 ]];
   then
     return 1;
   fi
   checkRequirements;
-  if [[ ! ${?} -eq 0 ]];
+  if [[ ${?} -gt 0 ]];
   then
     return 1;
   fi
@@ -396,6 +408,7 @@ function main {
   local iErasureCode;
   local iCompression;
   local iReSize;
+  local iSkip;
   local iOp;
   local i;
   base_cmd="${YARN_CMD} jar ${JAR_FILE} ${PROGRAM} \
@@ -478,7 +491,7 @@ function main {
                     cmd+=" -${ERASURE_CODE_POLICY_PROP} ${iErasureCode}";
                     result_file+="-${ERASURE_CODE_POLICY_PROP}=${iErasureCode}";
                   fi
-                  parameters="blk:${iBlock},rep:${iReplication},nrf:${iFile},size:${iSize},buf:${iBuffer},stopol:${iStorage},zip:${iCompression},ec:${iErasureCode}";
+                  parameters="bk:${iBlock},r:${iReplication},f:${iFile},s:${iSize},bf:${iBuffer},sp:${iStorage},c:${iCompression},ec:${iErasureCode}";
                   for iOp in ${OPERATION_LIST};
                   do
                     case "${iOp}" in
@@ -492,7 +505,7 @@ function main {
                             -${WRITE_PROP} \
                             -${SIZE_PROP} ${iSize} \
                             ${result_file}-${WRITE_PROP}.log 2>&1)";
-                          if [[ ! ${?} -eq 0 ]];
+                          if [[ ${?} -gt 0 ]];
                           then
                             echoerr "${errmsg} ${err}";
                             return 1;
@@ -501,18 +514,18 @@ function main {
                         done
                         ;;
                       "${RESIZE_PROP}")
-                        i=0;
-                        while [[ ${i} -lt ${RESIZE_OCCURENCE} ]];
+                        for iReSize in ${RESIZE_LIST};
                         do
-                          for iReSize in ${RESIZE_LIST};
+                          i=0;
+                          while [[ ${i} -lt ${RESIZE_OCCURENCE} ]];
                           do
                             echo "Progression: ${iOcc}/${nrOcc}: ${APPEND_PROP},add:${iReSize},${parameters}";
                             iOcc=$((iOcc+1));
                             err="$(${cmd} \
                               -${APPEND_PROP} \
                               -${SIZE_PROP} ${iReSize} \
-                              ${result_file}-${APPEND_PROP}-${iReSize}.log 2>&1)";
-                            if [[ ! ${?} -eq 0 ]];
+                              ${result_file}-${APPEND_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
+                            if [[ ${?} -gt 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
                               return 1;
@@ -522,43 +535,62 @@ function main {
                             err="$(${cmd} \
                               -${TRUNCATE_PROP} \
                               -${SIZE_PROP} ${iReSize} \
-                              ${result_file}-${TRUNCATE_PROP}-${iReSize}.log 2>&1)";
-                            if [[ ! ${?} -eq 0 ]];
+                              ${result_file}-${TRUNCATE_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
+                            if [[ ${?} -gt 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
                               return 1;
                             fi
+                            i=$((i+1));
                           done
+                        done
+                        ;;
+                      "${READ_PROP}"|"${RANDOM_PROP}"|"${BACKWARD_PROP}")
+                        i=0;
+                        while [[ ${i} -lt ${READ_OCCURENCE} ]];
+                        do
+                          case "${iOp}" in
+                            "${READ_PROP}")
+                              progression="Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${parameters}"
+                              read_cmd="${cmd} \
+                                -${READ_PROP} \
+                                -${SIZE_PROP} ${iSize} \
+                                ${result_file}-${READ_PROP}.log";
+                              ;;
+                            *)
+                              progression="Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${iOp},${parameters}"
+                              read_cmd="${cmd} \
+                                -${READ_PROP} \
+                                -${iOp} \
+                                -${SIZE_PROP} ${iSize} \
+                                ${result_file}-${READ_PROP}-${iOp}.log";
+                              ;;
+                          esac
+                          echo "${progression}";
+                          iOcc=$((iOcc+1));
+                          err="$(${read_cmd} 2>&1)";
+                          if [[ ${?} -gt 0 ]];
+                          then
+                            echoerr "${errmsg} ${err}";
+                            return 1;
+                          fi
                           i=$((i+1));
                         done
                         ;;
-                      "${READ_PROP}"|"${RANDOM_PROP}"|"${BACKWARD_PROP}"|"${SHORT_CIRCUIT_PROP}")
-                        if [[ "${iOp}" != "${SHORT_CIRCUIT_PROP}" ]] && \
-                          [[ "${iCompression}" != "${NIL}" ]];
+                      "${SHORT_CIRCUIT_PROP}")
+                        if [[ "${iCompression}" == "${NIL}" ]];
                         then
                           i=0;
                           while [[ ${i} -lt ${READ_OCCURENCE} ]];
                           do
-                            case "${iOp}" in
-                              "${READ_PROP}")
-                                progression="Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${parameters}"
-                                read_cmd="${cmd} \
-                                  -${READ_PROP} \
-                                  -${SIZE_PROP} ${iSize} \
-                                  ${result_file}-${READ_PROP}.log";
-                                ;;
-                              *)
-                                progression="Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${iOp},${parameters}"
-                                read_cmd="${cmd} \
-                                  -${READ_PROP} \
-                                  -${iOp} \
-                                  -${SIZE_PROP} ${iSize} \
-                                  ${result_file}-${READ_PROP}-${iOp}.log";
-                                ;;
-                            esac
+                            echo "Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${SHORT_CIRCUIT_PROP},${parameters}";
                             iOcc=$((iOcc+1));
-                            err="$(${read_cmd} 2>&1)";
-                            if [[ ! ${?} -eq 0 ]];
+                            err="$(${cmd} \
+                              -${READ_PROP} \
+                              -${SHORT_CIRCUIT_PROP} \
+                              -${SIZE_PROP} ${iSize} \
+                              ${result_file}-${READ_PROP}-${SHORT_CIRCUIT_PROP}.log 2>&1)";
+                            if [[ ${?} -gt 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
                               return 1;
@@ -568,6 +600,27 @@ function main {
                         fi
                         ;;
                       "${SKIP_PROP}")
+                        for iSkip in ${SKIP_SIZE_LIST};
+                        do
+                          i=0;
+                          while [[ ${i} -lt ${READ_OCCURENCE} ]];
+                          do
+                            echo "Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${SKIP_PROP}:${iSkip},${parameters}";
+                            iOcc=$((iOcc+1));
+                            err="$(${cmd} \
+                              -${READ_PROP} \
+                              -${SKIP_PROP} \
+                              -${SKIP_SIZE_PROP} ${iSkip} \
+                              -${SIZE_PROP} ${iSize} \
+                              ${result_file}-${READ_PROP}-${SKIP_PROP}-${SKIP_SIZE_PROP}=${iSkip}.log 2>&1)";
+                            if [[ ${?} -gt 0 ]];
+                            then
+                              echoerr "${errmsg} ${err}";
+                              return 1;
+                            fi
+                            i=$((i+1));
+                          done
+                        done
                         ;;
                     esac
                   done

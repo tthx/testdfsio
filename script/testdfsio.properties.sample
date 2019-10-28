@@ -1,0 +1,48 @@
+# General properties
+test.build.data
+resultDir
+resFile
+operation
+nrFiles
+size
+bufferSize
+dfs.blocksize
+dfs.replication
+compression
+storagePolicy
+erasureCodePolicy
+
+# Write properties
+nrOcc.write
+nrOcc.resize
+resize.size
+
+# Read properties
+nrOcc.read
+skipSize
+
+# Java properties
+java.home
+java.opts
+jarFile
+
+# Hadoop properties
+hadoop.home
+hadoop.conf.dir
+
+# Application Master properties
+yarn.app.mapreduce.am.log.level
+
+# Map tasks properties
+mapreduce.job.maps
+mapreduce.job.running.map.limit
+mapreduce.map.memory.mb
+mapreduce.map.java.opts
+mapreduce.map.log.level
+
+# Reducer tasks properties
+mapreduce.job.reduces
+mapreduce.job.running.reduce.limit
+mapreduce.reduce.memory.mb
+mapreduce.reduce.java.opts
+mapreduce.reduce.log.level

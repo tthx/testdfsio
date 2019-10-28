@@ -103,3 +103,19 @@ In `[genericOptions]`, the most common HDFS behaviors we would like to alter are
     - `-Dmapreduce.reduce.log.level=<log level>`, where `<log level>` is the logging level for the reduce task. The allowed levels are: `OFF`, `FATAL`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` and `ALL`.
 
 **Note**: For TestDFSIO, you should set the amount of memory for map and reduces tasks at least to 1024 and JVM garbage collector to [*G1 Garbage Collector*](https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html) with `-XX:+UseG1GC`.
+
+
+Progression: 1/14: write,bk:64m,r:1,f:8,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 2/14: read,bk:64m,r:1,f:8,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 3/14: read,bk:64m,r:1,f:8,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 4/14: read,bk:64m,r:1,f:8,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 5/14: read,shortcircuit,bk:64m,r:1,f:8,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 6/14: read,shortcircuit,bk:64m,r:1,f:8,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 7/14: read,shortcircuit,bk:64m,r:1,f:8,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 8/14: write,bk:64m,r:1,f:10,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 9/14: read,bk:64m,r:1,f:10,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 10/14: read,bk:64m,r:1,f:10,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 11/14: read,bk:64m,r:1,f:10,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 12/14: read,shortcircuit,bk:64m,r:1,f:10,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 13/14: read,shortcircuit,bk:64m,r:1,f:10,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
+Progression: 14/14: read,shortcircuit,bk:64m,r:1,f:10,s:64MB,bf:4096,sp:nil,c:nil,ec:nil
