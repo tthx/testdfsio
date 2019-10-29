@@ -1,46 +1,106 @@
+#
 # General properties
+#
 test.build.data
 resultDir
 resFile
+
+# Available values for 'operation' property:
+# - write
+# - read
+# - resize (i.e. append and truncate)
+# - random
+# - backward
+# - skip
+# - shortcircuit
+# 'operation' is a list of previous values. Order matters.
 operation
+
+# A list of number of file
 nrFiles
+
+# A list of number of file size
 size
+
+# A list of number of buffer size
 bufferSize
+
+# A list of number of block size
 dfs.blocksize
+
+# A list of number of number of replication per block
 dfs.replication
+
+# A list of number of compression codec
 compression
+
+# A list of number of storage policy
 storagePolicy
+
+# A list of number of erasure code policy
 erasureCodePolicy
 
+#
 # Write properties
+#
+
+# Number of 'write' operation for each combination for each item in:
+# - nrFiles
+# - size
+# - bufferSize
+# - dfs.blocksize
+# - dfs.replication
+# - compression
+# - storagePolicy
+# - erasureCodePolicy
 nrOcc.write
+
+# Number of 'resize' operation for each combination involve in 'write' operation to which is added each item of 'resize.size'
 nrOcc.resize
+
+# For 'resize' operation: list of size to append and to truncate
 resize.size
 
+#
 # Read properties
+#
+
+# Number of 'read' operation for each combination involve in 'write' operation
 nrOcc.read
+
+# For 'skip' operation: list of size to skip. Each item of this list is added each combination involve in 'read' operation
 skipSize
 
+#
 # Java properties
+#
 java.home
 java.opts
 jarFile
 
+#
 # Hadoop properties
+#
 hadoop.home
 hadoop.conf.dir
 
+#
 # Application Master properties
+#
 yarn.app.mapreduce.am.log.level
 
+#
 # Map tasks properties
+#
 mapreduce.job.maps
 mapreduce.job.running.map.limit
 mapreduce.map.memory.mb
 mapreduce.map.java.opts
 mapreduce.map.log.level
 
+#
 # Reducer tasks properties
+#
 mapreduce.job.reduces
 mapreduce.job.running.reduce.limit
 mapreduce.reduce.memory.mb

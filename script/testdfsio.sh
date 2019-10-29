@@ -99,9 +99,8 @@ function countWord { printf "%d" ${#}; }
 function inList {
   local x="${1}";
   shift 1;
-  local list="${*}";
   local i;
-  for i in ${list};
+  for i in ${*};
   do
     if [[ "${x}" == "${i}" ]];
     then
@@ -151,22 +150,21 @@ function getProperties {
           OPERATION_LIST="${value}";
           for i in ${OPERATION_LIST};
           do
-            if [[ $(inList "${i}" \
-                    "${WRITE_PROP}" \
-                    "${RESIZE_PROP}" \
-                    "${READ_PROP}" \
-                    "${BACKWARD_PROP}" \
-                    "${RANDOM_PROP}" \
-                    "${SKIP_PROP}" \
-                    "${SHORT_CIRCUIT_PROP}") -gt 0 ]];
+            inList \
+              "${i}" \
+              "${WRITE_PROP}" \
+              "${RESIZE_PROP}" \
+              "${READ_PROP}" \
+              "${BACKWARD_PROP}" \
+              "${RANDOM_PROP}" \
+              "${SKIP_PROP}" \
+              "${SHORT_CIRCUIT_PROP}";
+            if [[ ${?} -ne 0 ]];
             then
               echoerr "${errmsg} Operation \"${i}\" at line \"${line}\" is not supported.";
               return 1;
             fi
           done
-          ;;
-        "${RESIZE_PROP,,}")
-          RESIZE_LIST="${value}";
           ;;
         "${SKIP_SIZE_PROP,,}")
           SKIP_SIZE_LIST="${value}";
@@ -175,14 +173,16 @@ function getProperties {
           COMPRESSION_LIST="${value}";
           for i in ${COMPRESSION_LIST};
           do
-            if [[ $(inList "${i}" \
-                    "${NIL}" \
-                    "org.apache.hadoop.io.compress.BZip2Codec" \
-                    "org.apache.hadoop.io.compress.DefaultCodec" \
-                    "org.apache.hadoop.io.compress.DeflateCodec" \
-                    "org.apache.hadoop.io.compress.GzipCodec" \
-                    "org.apache.hadoop.io.compress.Lz4Codec" \
-                    "org.apache.hadoop.io.compress.SnappyCodec") -gt 0 ]];
+            inList \
+              "${i}" \
+              "${NIL}" \
+              "org.apache.hadoop.io.compress.BZip2Codec" \
+              "org.apache.hadoop.io.compress.DefaultCodec" \
+              "org.apache.hadoop.io.compress.DeflateCodec" \
+              "org.apache.hadoop.io.compress.GzipCodec" \
+              "org.apache.hadoop.io.compress.Lz4Codec" \
+              "org.apache.hadoop.io.compress.SnappyCodec";
+            if [[ ${?} -ne 0 ]];
             then
               echoerr "${errmsg} Compression codec \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -193,15 +193,17 @@ function getProperties {
           STORAGE_POLICY_LIST="${value}";
           for i in ${STORAGE_POLICY_LIST};
           do
-            if [[ $(inList "${i}" \
-                    "${NIL}" \
-                    "PROVIDED" \
-                    "COLD" \
-                    "WARM" \
-                    "HOT" \
-                    "ONE_SSD" \
-                    "ALL_SSD" \
-                    "LAZY_PERSIST") -gt 0 ]];
+            inList \
+              "${i}" \
+              "${NIL}" \
+              "PROVIDED" \
+              "COLD" \
+              "WARM" \
+              "HOT" \
+              "ONE_SSD" \
+              "ALL_SSD" \
+              "LAZY_PERSIST";
+            if [[ ${?} -ne 0 ]];
             then
               echoerr "${errmsg} Storage policy \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -212,13 +214,15 @@ function getProperties {
           ERASURE_CODE_POLICY_LIST="${value}";
           for i in ${ERASURE_CODE_POLICY_LIST};
           do
-            if [[ $(inList "${i}" \
-                    "${NIL}" \
-                    "RS-10-4-1024k" \
-                    "RS-3-2-1024k" \
-                    "RS-6-3-1024k" \
-                    "RS-LEGACY-6-3-1024k" \
-                    "XOR-2-1-1024k") -gt 0 ]];
+            inList \
+              "${i}" \
+              "${NIL}" \
+              "RS-10-4-1024k" \
+              "RS-3-2-1024k" \
+              "RS-6-3-1024k" \
+              "RS-LEGACY-6-3-1024k" \
+              "XOR-2-1-1024k";
+            if [[ ${?} -ne 0 ]];
             then
               echoerr "${errmsg} Erasure coding policy \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -245,6 +249,9 @@ function getProperties {
           ;;
         "${SIZE_PROP,,}")
           SIZE_LIST="${value}";
+          ;;
+        "${RESIZE_LIST_PROP,,}")
+          RESIZE_LIST="${value}";
           ;;
         "${BLOCK_SIZE_PROP,,}")
           BLOCK_SIZE_LIST="${value}";
@@ -353,21 +360,23 @@ function checkRequirements {
   if [[ ! -d "${RESULT_DIR}" ]];
   then
     err="$(mkdir -p "${RESULT_DIR}" 2>&1)";
-    if [[ ${?} -gt 0 ]];
+    if [[ ${?} -ne 0 ]];
     then
       echoerr "${errmsg} Unable to create directory \"${RESULT_DIR}\": ${err}";
       return 1;
     fi
   fi
-  if [[ $(inList ${RESIZE_PROP} ${OPERATION_LIST}) -gt 0 ]];
+  inList ${RESIZE_PROP} ${OPERATION_LIST};
+  if [[ ${?} -ne 0 ]];
   then
-    if [[ -z "${RESIZE_LIST_PROP}" ]];
+    if [[ -z "${RESIZE_LIST}" ]];
     then
       echoerr "${errmsg} Operation \"${RESIZE_PROP}\" requiert to set \"${RESIZE_LIST_PROP}\" property";
       return 1;
     fi
   fi
-  if [[ $(inList ${SKIP_PROP} ${OPERATION_LIST}) -gt 0 ]];
+  inList ${SKIP_PROP} ${OPERATION_LIST};
+  if [[ ${?} -ne 0 ]];
   then
     if [[ -z "${SKIP_SIZE_LIST}" ]];
     then
@@ -380,12 +389,12 @@ function checkRequirements {
 
 function main {
   getProperties "${1}";
-  if [[ ${?} -gt 0 ]];
+  if [[ ${?} -ne 0 ]];
   then
     return 1;
   fi
   checkRequirements;
-  if [[ ${?} -gt 0 ]];
+  if [[ ${?} -ne 0 ]];
   then
     return 1;
   fi
@@ -434,23 +443,26 @@ function main {
   nrOcc=0;
   for iOp in ${OPERATION_LIST};
   do
+    i=0;
     case "${iOp}" in
       "${WRITE_PROP}")
-        nrOcc=$((nrOcc+(iOcc*$(countWord ${COMPRESSION_LIST})*WRITE_OCCURENCE)));
+        i=$((iOcc*$(countWord ${COMPRESSION_LIST})*WRITE_OCCURENCE));
         ;;
       "${RESIZE_PROP}")
-        nrOcc=$((nrOcc+(iOcc*$(countWord ${COMPRESSION_LIST})*RESIZE_OCCURENCE*$(countWord ${RESIZE_LIST})*2)));
+        i=$((iOcc*$(countWord ${COMPRESSION_LIST})*RESIZE_OCCURENCE*$(countWord ${RESIZE_LIST})*2));
         ;;
       "${READ_PROP}"|"${BACKWARD_PROP}"|"${RANDOM_PROP}")
-        nrOcc=$((nrOcc+(iOcc*$(countWord ${COMPRESSION_LIST})*READ_OCCURENCE)));
+        i=$((iOcc*$(countWord ${COMPRESSION_LIST})*READ_OCCURENCE));
         ;;
       "${SKIP_PROP}")
-        nrOcc=$((nrOcc+(iOcc*$(countWord ${COMPRESSION_LIST})*READ_OCCURENCE*$(countWord ${SKIP_SIZE_LIST}))));
+        i=$((iOcc*$(countWord ${COMPRESSION_LIST})*READ_OCCURENCE*$(countWord ${SKIP_SIZE_LIST})));
         ;;
       "${SHORT_CIRCUIT_PROP}")
-        nrOcc=$((nrOcc+(iOcc*READ_OCCURENCE)));
+        i=$((iOcc*READ_OCCURENCE));
         ;;
     esac
+    nrOcc=$((nrOcc+i));
+    echo "Number of \"${iOp}\" operations: ${i}";
   done
   iOcc=1;
   for iBlock in ${BLOCK_SIZE_LIST};
@@ -505,7 +517,7 @@ function main {
                             -${WRITE_PROP} \
                             -${SIZE_PROP} ${iSize} \
                             ${result_file}-${WRITE_PROP}.log 2>&1)";
-                          if [[ ${?} -gt 0 ]];
+                          if [[ ${?} -ne 0 ]];
                           then
                             echoerr "${errmsg} ${err}";
                             return 1;
@@ -525,7 +537,7 @@ function main {
                               -${APPEND_PROP} \
                               -${SIZE_PROP} ${iReSize} \
                               ${result_file}-${APPEND_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
-                            if [[ ${?} -gt 0 ]];
+                            if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
                               return 1;
@@ -536,7 +548,7 @@ function main {
                               -${TRUNCATE_PROP} \
                               -${SIZE_PROP} ${iReSize} \
                               ${result_file}-${TRUNCATE_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
-                            if [[ ${?} -gt 0 ]];
+                            if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
                               return 1;
@@ -569,7 +581,7 @@ function main {
                           echo "${progression}";
                           iOcc=$((iOcc+1));
                           err="$(${read_cmd} 2>&1)";
-                          if [[ ${?} -gt 0 ]];
+                          if [[ ${?} -ne 0 ]];
                           then
                             echoerr "${errmsg} ${err}";
                             return 1;
@@ -590,7 +602,7 @@ function main {
                               -${SHORT_CIRCUIT_PROP} \
                               -${SIZE_PROP} ${iSize} \
                               ${result_file}-${READ_PROP}-${SHORT_CIRCUIT_PROP}.log 2>&1)";
-                            if [[ ${?} -gt 0 ]];
+                            if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
                               return 1;
@@ -613,7 +625,7 @@ function main {
                               -${SKIP_SIZE_PROP} ${iSkip} \
                               -${SIZE_PROP} ${iSize} \
                               ${result_file}-${READ_PROP}-${SKIP_PROP}-${SKIP_SIZE_PROP}=${iSkip}.log 2>&1)";
-                            if [[ ${?} -gt 0 ]];
+                            if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
                               return 1;
