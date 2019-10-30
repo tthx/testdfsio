@@ -150,16 +150,15 @@ function getProperties {
           OPERATION_LIST="${value}";
           for i in ${OPERATION_LIST};
           do
-            inList \
-              "${i}" \
-              "${WRITE_PROP}" \
-              "${RESIZE_PROP}" \
-              "${READ_PROP}" \
-              "${BACKWARD_PROP}" \
-              "${RANDOM_PROP}" \
-              "${SKIP_PROP}" \
-              "${SHORT_CIRCUIT_PROP}";
-            if [[ ${?} -ne 0 ]];
+            if [[ $(inList \
+                    "${i}" \
+                    "${WRITE_PROP}" \
+                    "${RESIZE_PROP}" \
+                    "${READ_PROP}" \
+                    "${BACKWARD_PROP}" \
+                    "${RANDOM_PROP}" \
+                    "${SKIP_PROP}" \
+                    "${SHORT_CIRCUIT_PROP}") -ne 0 ]];
             then
               echoerr "${errmsg} Operation \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -173,16 +172,15 @@ function getProperties {
           COMPRESSION_LIST="${value}";
           for i in ${COMPRESSION_LIST};
           do
-            inList \
-              "${i}" \
-              "${NIL}" \
-              "org.apache.hadoop.io.compress.BZip2Codec" \
-              "org.apache.hadoop.io.compress.DefaultCodec" \
-              "org.apache.hadoop.io.compress.DeflateCodec" \
-              "org.apache.hadoop.io.compress.GzipCodec" \
-              "org.apache.hadoop.io.compress.Lz4Codec" \
-              "org.apache.hadoop.io.compress.SnappyCodec";
-            if [[ ${?} -ne 0 ]];
+            if [[ $(inList \
+                    "${i}" \
+                    "${NIL}" \
+                    "org.apache.hadoop.io.compress.BZip2Codec" \
+                    "org.apache.hadoop.io.compress.DefaultCodec" \
+                    "org.apache.hadoop.io.compress.DeflateCodec" \
+                    "org.apache.hadoop.io.compress.GzipCodec" \
+                    "org.apache.hadoop.io.compress.Lz4Codec" \
+                    "org.apache.hadoop.io.compress.SnappyCodec") -ne 0 ]];
             then
               echoerr "${errmsg} Compression codec \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -193,17 +191,16 @@ function getProperties {
           STORAGE_POLICY_LIST="${value}";
           for i in ${STORAGE_POLICY_LIST};
           do
-            inList \
-              "${i}" \
-              "${NIL}" \
-              "PROVIDED" \
-              "COLD" \
-              "WARM" \
-              "HOT" \
-              "ONE_SSD" \
-              "ALL_SSD" \
-              "LAZY_PERSIST";
-            if [[ ${?} -ne 0 ]];
+            if [[ $(inList \
+                    "${i}" \
+                    "${NIL}" \
+                    "PROVIDED" \
+                    "COLD" \
+                    "WARM" \
+                    "HOT" \
+                    "ONE_SSD" \
+                    "ALL_SSD" \
+                    "LAZY_PERSIST") -ne 0 ]];
             then
               echoerr "${errmsg} Storage policy \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -214,15 +211,14 @@ function getProperties {
           ERASURE_CODE_POLICY_LIST="${value}";
           for i in ${ERASURE_CODE_POLICY_LIST};
           do
-            inList \
-              "${i}" \
-              "${NIL}" \
-              "RS-10-4-1024k" \
-              "RS-3-2-1024k" \
-              "RS-6-3-1024k" \
-              "RS-LEGACY-6-3-1024k" \
-              "XOR-2-1-1024k";
-            if [[ ${?} -ne 0 ]];
+            if [[ $(inList \
+                    "${i}" \
+                    "${NIL}" \
+                    "RS-10-4-1024k" \
+                    "RS-3-2-1024k" \
+                    "RS-6-3-1024k" \
+                    "RS-LEGACY-6-3-1024k" \
+                    "XOR-2-1-1024k") -ne 0 ]];
             then
               echoerr "${errmsg} Erasure coding policy \"${i}\" at line \"${line}\" is not supported.";
               return 1;
@@ -325,7 +321,7 @@ function getProperties {
           ;;
       esac
     fi
-  done < "${propertiesFile}"
+  done < "${propertiesFile}";
   return 0;
 }
 
@@ -360,14 +356,13 @@ function checkRequirements {
   if [[ ! -d "${RESULT_DIR}" ]];
   then
     err="$(mkdir -p "${RESULT_DIR}" 2>&1)";
-    if [[ ${?} -ne 0 ]];
+    if [[ ${?} ]];
     then
       echoerr "${errmsg} Unable to create directory \"${RESULT_DIR}\": ${err}";
       return 1;
     fi
   fi
-  inList ${RESIZE_PROP} ${OPERATION_LIST};
-  if [[ ${?} -ne 0 ]];
+  if [[ $(inList ${RESIZE_PROP} ${OPERATION_LIST}) -ne 0 ]];
   then
     if [[ -z "${RESIZE_LIST}" ]];
     then
@@ -375,8 +370,7 @@ function checkRequirements {
       return 1;
     fi
   fi
-  inList ${SKIP_PROP} ${OPERATION_LIST};
-  if [[ ${?} -ne 0 ]];
+  if [[ $(inList ${SKIP_PROP} ${OPERATION_LIST}) -ne 0 ]];
   then
     if [[ -z "${SKIP_SIZE_LIST}" ]];
     then
@@ -393,8 +387,7 @@ function main {
   then
     return 1;
   fi
-  checkRequirements;
-  if [[ ${?} -ne 0 ]];
+  if [[ $(checkRequirements) -ne 0 ]];
   then
     return 1;
   fi
@@ -515,8 +508,8 @@ function main {
                           iOcc=$((iOcc+1));
                           err="$(${cmd} \
                             -${WRITE_PROP} \
-                            -${SIZE_PROP} ${iSize} \
-                            ${result_file}-${WRITE_PROP}.log 2>&1)";
+                            -${SIZE_PROP} "${iSize}" \
+                            "${result_file}-${WRITE_PROP}.log" 2>&1)";
                           if [[ ${?} -ne 0 ]];
                           then
                             echoerr "${errmsg} ${err}";
@@ -535,8 +528,8 @@ function main {
                             iOcc=$((iOcc+1));
                             err="$(${cmd} \
                               -${APPEND_PROP} \
-                              -${SIZE_PROP} ${iReSize} \
-                              ${result_file}-${APPEND_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
+                              -${SIZE_PROP} "${iReSize}" \
+                              "${result_file}-${APPEND_PROP}-${SIZE_PROP}=${iReSize}.log" 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
@@ -546,8 +539,8 @@ function main {
                             iOcc=$((iOcc+1));
                             err="$(${cmd} \
                               -${TRUNCATE_PROP} \
-                              -${SIZE_PROP} ${iReSize} \
-                              ${result_file}-${TRUNCATE_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
+                              -${SIZE_PROP} "${iReSize}" \
+                              "${result_file}-${TRUNCATE_PROP}-${SIZE_PROP}=${iReSize}.log" 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
@@ -600,8 +593,8 @@ function main {
                             err="$(${cmd} \
                               -${READ_PROP} \
                               -${SHORT_CIRCUIT_PROP} \
-                              -${SIZE_PROP} ${iSize} \
-                              ${result_file}-${READ_PROP}-${SHORT_CIRCUIT_PROP}.log 2>&1)";
+                              -${SIZE_PROP} "${iSize}" \
+                              "${result_file}-${READ_PROP}-${SHORT_CIRCUIT_PROP}.log" 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
@@ -622,9 +615,9 @@ function main {
                             err="$(${cmd} \
                               -${READ_PROP} \
                               -${SKIP_PROP} \
-                              -${SKIP_SIZE_PROP} ${iSkip} \
-                              -${SIZE_PROP} ${iSize} \
-                              ${result_file}-${READ_PROP}-${SKIP_PROP}-${SKIP_SIZE_PROP}=${iSkip}.log 2>&1)";
+                              -${SKIP_SIZE_PROP} "${iSkip}" \
+                              -${SIZE_PROP} "${iSize}" \
+                              "${result_file}-${READ_PROP}-${SKIP_PROP}-${SKIP_SIZE_PROP}=${iSkip}.log" 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
