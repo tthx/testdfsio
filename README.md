@@ -178,7 +178,7 @@ Number of "read" test: 480000
 Number of "shortcircuit" test: 120000
 ```
 
-The sum of number of test is 1080000.
+The sum of number of test is `1080000`.
 
 #### Write and read seekable
 
@@ -211,7 +211,7 @@ Number of "backward" test: 120000
 Number of "skip" test: 240000
 ```
 
-The sum of number of test is 482400.
+The sum of number of test is `482400`.
 
 #### Write and resize (i.e. append then truncate)
 
@@ -242,4 +242,4 @@ Number of "write" test: 4800
 Number of "resize" test: 960000
 ```
 
-The sum of number of test is 964800.
+The sum of number of test is `964800`.
