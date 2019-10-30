@@ -75,14 +75,14 @@ The following table describes others TestDFSIO arguments:
 |---:|:---|
 |`[genericOptions]`|TestDFSIO honors the [*Hadoop command-line Generic Options*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/CommandsManual.html#Generic_Options) to alter its behavior.|
 |`-bufferSize <n>`|Set the size of the buffer to use to `<n>` bytes for read/write operations.|
-|`-write`|Performs writes on a HDFS cluster. It is convenient to use this before the `-read` argument, so that some files are prepared for read test.<br><br>The written files are located in HDFS under folder specified by `test.build.data` property. If the folder exists, it will be first deleted.<br><br>You can set HDFS replication factor for each TestDFSIO write with the property `dfs.replication`. For example, if we set the output folder to `/home/alice/benchmarks/TestDFSIO` and the HDFS replication factor to 2, the resulting command is:<br><br>```$ yarn jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-3.2.1-tests.jar TestDFSIO -Ddfs.replication=2 -Dtest.build.data=/home/alice/benchmarks/TestDFSIO -write -nrFiles 10 -size 2GB```<br><br>**Note**: As before each write test, TestDFSIO delete the folder specified by the property `test.build.data`. If you want to reuse an output folder and preserve the files of previous runs, you have to copy/move these files manually to a new HDFS location. The simplest way to achieve this is to use a new output directory for each write test.<br><br>TestDFSIO support several write mode:<br>- Sequential write, it’s the default,<br>- Append write, by using `-append` instead of `-write` parameter,<br>- Truncate write, by using `-truncate` instead of `-write` parameter. **Note**: With `-truncate` parameter, the value specified by the `-size` parameter must be less or equal than files size to truncate otherwise exceptions are raised.|
-|`-read`|Performs reads on a HDFS cluster. Read test of TestDFSIO does not generate its own input files. For this reason, it is a convenient practice to first run a write test via -write and then follow-up with a read test via `-read` (while using the same parameters as during the previous `-write` run).<br><br>TestDFSIO support several read mode:<br>- Sequential read, it’s the default. By adding `-shortcircuit` to the `-read` parameter you can test the [*short circuit local reads*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/ShortCircuitLocalReads.html) feature. **Note**: Our tests of *short circuit local* reads compressed file as raw file: we don't decompress data (i.e.: using `-compression <codecClassName>` parameter with `-shortcircuit`parameter is useless),<br>- Random read, by adding `-random` to the `-read` parameter,<br>- Backward read, by adding `-backward` to the `-read` parameter,<br>- Skip read, by adding `-skip` to the `-read` parameter. In this mode, you can specify the value to skip with the `-skipSize` parameter.|
+|`-write`|Performs writes on a HDFS cluster. It is convenient to use this before the `-read` argument, so that some files are prepared for read test.<br><br>The written files are located in HDFS under folder specified by `test.build.data` property. If the folder exists, it will be first deleted.<br><br>You can set HDFS replication factor for each TestDFSIO write with the property `dfs.replication`. For example, if we set the output folder to `/home/alice/benchmarks/TestDFSIO` and the HDFS replication factor to 2, the resulting command is:<br><br>```$ yarn jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-3.2.1-tests.jar TestDFSIO -Ddfs.replication=2 -Dtest.build.data=/home/alice/benchmarks/TestDFSIO -write -nrFiles 10 -size 2GB```<br><br>**Note**: As before each write test, TestDFSIO delete the folder specified by the property `test.build.data`. If you want to reuse an output folder and preserve the files of previous runs, you have to copy/move these files manually to a new HDFS location. The simplest way to achieve this is to use a new output directory for each write test.<br><br>TestDFSIO support several write mode:<br>- Sequential write, it’s the default,<br>- Append write, by using `-append` instead of `-write` parameter,<br>- Truncate write, by using `-truncate` instead of `-write` parameter.<br><br>**Note**:<br>- With `-truncate` parameter, the value specified by the `-size` parameter must be less or equal than files size to truncate otherwise exceptions are raised.<br>- `-append` and `-truncate` don't support `LAZY_PERSIST` storage policy.|
+|`-read`|Performs reads on a HDFS cluster. Read test of TestDFSIO does not generate its own input files. For this reason, it is a convenient practice to first run a write test via -write and then follow-up with a read test via `-read` (while using the same parameters as during the previous `-write` run).<br><br>TestDFSIO support several read mode:<br>- Sequential read, it’s the default. By adding `-shortcircuit` to the `-read` parameter you can test the [*short circuit local reads*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/ShortCircuitLocalReads.html) feature. **Note**: Our tests of *short circuit local* reads compressed file as raw file: we don't decompress data (i.e.: using `-compression <codecClassName>` parameter with `-shortcircuit`parameter is useless),<br>- Random read, by adding `-random` to the `-read` parameter,<br>- Backward read, by adding `-backward` to the `-read` parameter,<br>- Skip read, by adding `-skip` to the `-read` parameter. In this mode, you can specify the value to skip with the `-skipSize` parameter.<br><br>**Note**:<br>- You can't use `-append` or `-truncate` then `-read` or `-shortcircuit` with compression.<br> - `-random`, `-backward` and `-skip` don't support compression.|
 |`-nrFiles <n>`|Set the number of files used in test. If the test is writing, this argument defines the number of output files. If the test is reading, this argument defines the number of input files.<br><br>**Note**: Values of the parameter `-nrFiles` for append, truncate and read tests must be less or equal than to those used during the writing test otherwise exceptions are raised.<br><br>**Note**: TestDFSIO is designed in such a way that it will use one map task per file to write or to read. In parallel, each map tack attempts to create a file. But, if the value of `-nrFiles` exceeds the number of tasks which the target cluster can run in parallel, some map tasks of TestDFSIO are pending.|
 |`-size <n> [B\|KB\|MB\|GB\|TB]`|Set files size used in testing. This argument takes a numerical value with optional `B\|KB\|MB\|GB\|TB`. `MB` is default.|
 |`-clean`|Deletes the HDFS output folder specified by `test.build.data` (`/benchmarks/TestDFSIO` by default).|
-|`-compression <codecClassName>`|Performs read/write compressions on a HDFS cluster. Available parameter values are:<br><br>- `org.apache.hadoop.io.compress.BZip2Codec`,<br>- `org.apache.hadoop.io.compress.DefaultCodec`,<br>- `org.apache.hadoop.io.compress.DeflateCodec`,<br>- `org.apache.hadoop.io.compress.GzipCodec`,<br>- `org.apache.hadoop.io.compress.Lz4Codec`,<br>- `org.apache.hadoop.io.compress.SnappyCodec`.<br><br>To be consistent, when you use compression codec at write, you must use the same compression codec at read.<br><br>**Note**: TestDFSIO reads compressed files without raising exception if you don’t specify compression codec. But it raises exceptions if you attempt to read with a different codec than the one used at write.|
-|`-storagePolicy <storagePolicyName>`|Performs read/write with storages policies. Available parameter values are:<br><br>- `PROVIDED`,<br>- `COLD`,<br>- `WARM`,<br>- `HOT`,<br>- `ONE_SSD`,<br>- `ALL_SSD`,<br>- `LAZY_PERSIST`.<br><br>For their meaning, see [*Archival Storage, SSD & Memory*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/ArchivalStorage.html)|
-|`-erasureCodePolicy <erasureCodePolicyName>`|Performs read/write with HDFS erasure coding. Available parameter values are:<br><br>- `RS-10-4-1024k`,<br>- `RS-3-2-1024k`,<br>- `RS-6-3-1024k`,<br>- `RS-LEGACY-6-3-1024k`,<br>- `XOR-2-1-1024k`.<br><br>For their meaning, see [*HDFS Erasure Coding*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/HDFSErasureCoding.html).|
+|`-compression <codecClassName>`|Performs read/write compressions on a HDFS cluster. Available parameter values are:<br>- `org.apache.hadoop.io.compress.BZip2Codec`,<br>- `org.apache.hadoop.io.compress.DefaultCodec`,<br>- `org.apache.hadoop.io.compress.DeflateCodec`,<br>- `org.apache.hadoop.io.compress.GzipCodec`,<br>- `org.apache.hadoop.io.compress.Lz4Codec`,<br>- `org.apache.hadoop.io.compress.SnappyCodec`.<br><br>To be consistent, when you use compression codec at write, you must use the same compression codec at read.<br><br>**Note**: TestDFSIO reads compressed files without raising exception if you don’t specify compression codec. But it raises exceptions if you attempt to read with a different codec than the one used at write.|
+|`-storagePolicy <storagePolicyName>`|Performs read/write with storages policies. Available parameter values are:<br>- `PROVIDED`,<br>- `COLD`,<br>- `WARM`,<br>- `HOT`,<br>- `ONE_SSD`,<br>- `ALL_SSD`,<br>- `LAZY_PERSIST`.<br><br>For their meaning, see [*Archival Storage, SSD & Memory*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/ArchivalStorage.html)|
+|`-erasureCodePolicy <erasureCodePolicyName>`|Performs read/write with HDFS erasure coding. Available parameter values are:<br>- `RS-10-4-1024k`,<br>- `RS-3-2-1024k`,<br>- `RS-6-3-1024k`,<br>- `RS-LEGACY-6-3-1024k`,<br>- `XOR-2-1-1024k`.<br><br>For their meaning, see [*HDFS Erasure Coding*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/HDFSErasureCoding.html).|
 
 In `[genericOptions]`, the most common HDFS behaviors we would like to alter are:
 
@@ -115,19 +115,19 @@ To automatize tests, we provide [*testdfsio.sh*](script/testdfsio.sh), a BASH sc
 |---:|:---|:---|
 |`test.build.data`||HDFS directory where TestDFSIO performs operations. User's script must have read and write permission to create this directory.|
 |`resultDir`||Local directory where TestDFSIO will store results.|
-|`operation`||A list of operations to perform. Available operations are:<br><br>- `write`,<br> - `read`,<br> - `resize` (i.e. `append` and `truncate`),<br> - `random`,<br> - `backward`,<br> - `skip`,<br> - `shortcircuit`.<br><br>Except `resize`, others operations have the meaning given in the previous section. `resize` is a shortcut for two sequential TestDFSIO tests: `append` and `truncate`, in this order. Operation order matter. For example:<br><br>- with `operation=write read skip`, the test sequence is `write` then `read` and `skip`.<br> - with `operation=write skip read`, the test sequence is `write` then `skip` and `read`.|
+|`operation`||A list of operations to perform. Available operations are:<br>- `write`,<br> - `read`,<br> - `resize` (i.e. `append` and `truncate`),<br> - `random`,<br> - `backward`,<br> - `skip`,<br> - `shortcircuit`.<br><br>Except `resize`, others operations have the meaning given in the previous section. `resize` is a shortcut for two sequential TestDFSIO tests: `append` and `truncate`, in this order. Operation order matter. For example:<br>- with `operation=write read skip`, the test sequence is `write` then `read` and `skip`.<br> - with `operation=write skip read`, the test sequence is `write` then `skip` and `read`.<br><br>**Note**:<br>- If you plan to use `resize` and `read` or `shortcircuit` with compression, you must set `resize` at the end of the sequence.<br> - `random`, `backward` and `skip` don't support compression.<br> - `resize` doesn't support `LAZY_PERSIST` storage policy.|
 |`nrFiles`||A list of number of file.|
 |`size`||A list of file size.|
 |`bufferSize`|`4096`|A list of buffer size.|
 |`dfs.blocksize`|`256m`|A list of block size.|
 |`dfs.replication`|`3`|A list of number of replication per block.|
-|`compression`|`nil`|A list of compression codec|
-|`storagePolicy`|`nil`|A list of storage policy.|
-|`erasureCodePolicy`|`nil`|A list of erasure code policy.|
-|`nrOcc.write`||Number of `write` operation for each combination for each item in:<br><br>- `nrFiles`,<br> - `size`,<br> - `bufferSize`,<br> - `dfs.blocksize`,<br> - `dfs.replication`,<br> - `compression`,<br> - `storagePolicy`,<br> - `erasureCodePolicy`.|
+|`compression`|`nil`|A list of compression codec. `nil` means no compression.|
+|`storagePolicy`|`nil`|A list of storage policy. `nil` means no storage policy.|
+|`erasureCodePolicy`|`nil`|A list of erasure code policy. `nil` means no erasure coding.|
+|`nrOcc.write`||Number of `write` operation for each combination for each item in:<br>- `nrFiles`,<br> - `size`,<br> - `bufferSize`,<br> - `dfs.blocksize`,<br> - `dfs.replication`,<br> - `compression`,<br> - `storagePolicy`,<br> - `erasureCodePolicy`.|
 |`nrOcc.resize`||Number of `resize` operation for each combination involve in `write` operation to which is added each item of `resize.size`.|
 |`resize.size`||For `resize` operation: list of size to append and to truncate|
-|`nrOcc.read`||Number of `read`, or `random`, or `backward`, or `skip`, or `shortcircuit` operation for each combination involve in `write` operation.|
+|`nrOcc.read`||Number of `read`, `random`, `backward`, `skip` or `shortcircuit` operation for each combination involve in `write` operation.|
 |`skipSize`||For `skip` operation: list of size to skip. Each item of this list is added each combination involve in `read` operation.|
 |`java.home`||Local Java home directory.|
 |`java.opts`||Local Java options.|
@@ -146,41 +146,100 @@ To automatize tests, we provide [*testdfsio.sh*](script/testdfsio.sh), a BASH sc
 |`mapreduce.reduce.java.opts`|`-XX:+UseG1GC`|See previous section.|
 |`mapreduce.reduce.log.level`|`INFO`|See previous section.|
 
-### Properties example
+### Properties examples
+
+#### Write, read and short circuit local read
 
 We provide a properties file example with [*script/testdfsio.properties*](script/testdfsio.properties):
 
 ```
 test.build.data=/tmp/TestDFSIO
 resultDir=/tmp/TestDFSIO
-operation=write resize read random backward skip shortcircuit
+operation=write read shortcircuit
 nrOcc.write=50
-nrOcc.resize=50
-resize.size=100MB 200MB
 nrOcc.read=50
 nrFiles=10 20 40 80 160
 size=1GB 2GB
-skipSize=10MB 20MB
 bufferSize=4096 8192 16384 32768
-dfs.blocksize=64m 128m 512m 1g
+dfs.blocksize=64m 128m 256m 512m 1g
 dfs.replication=1 2 3 4 5 6
-compression=nil org.apache.hadoop.io.compress.SnappyCodec org.apache.hadoop.io.compress.Lz4Codec
+compression=nil org.apache.hadoop.io.compress.SnappyCodec org.apache.hadoop.io.compress.Lz4Codec org.apache.hadoop.io.compress.BZip2Codec
 storagePolicy=nil LAZY_PERSIST
 java.home=/opt/jdk1.8.0_231
 jarFile=script/TestDFSIO-0.0.1.jar
 mapreduce.job.running.map.limit=16
 ```
 
-With all combination of each item of `resize.size`, `nrFiles`, `size`, `skipSize`, `bufferSize`, `dfs.blocksize`, `dfs.replication`, `compression`, `storagePolicy` and the number of execution for each operation, we have:
+With all combination of each item of `nrFiles`, `size`, `bufferSize`, `dfs.blocksize`, `dfs.replication`, `compression`, `storagePolicy` and the numbers of execution for each operation (i.e. `nrOcc.write` and `nrOcc.read`), we have:
 
 ```
-Number of "write" test: 288000
-Number of "resize" test: 1152000
-Number of "read" test: 288000
-Number of "random" test: 288000
-Number of "backward" test: 288000
-Number of "skip" test: 576000
-Number of "shortcircuit" test: 96000
+Number of "write" test: 480000
+Number of "read" test: 480000
+Number of "shortcircuit" test: 120000
 ```
 
-The sum of number of test is 2976000.
+The sum of number of test is 1080000.
+
+#### Write and read seekable
+
+We provide a properties file example with [*script/testdfsio-seekable.properties*](script/testdfsio-seekable.properties):
+
+```
+test.build.data=/tmp/TestDFSIO
+resultDir=/tmp/TestDFSIO
+operation=write random backward skip
+nrOcc.write=1
+nrOcc.read=50
+nrFiles=10 20 40 80 160
+size=1GB 2GB
+skipSize=100MB 200MB
+bufferSize=4096 8192 16384 32768
+dfs.blocksize=64m 128m 256m 512m 1g
+dfs.replication=1 2 3 4 5 6
+storagePolicy=nil LAZY_PERSIST
+java.home=/opt/jdk1.8.0_231
+jarFile=script/TestDFSIO-0.0.1.jar
+mapreduce.job.running.map.limit=16
+```
+
+With all combination of each item of `nrFiles`, `size`, `bufferSize`, `dfs.blocksize`, `dfs.replication`, `storagePolicy` and the numbers of execution for each operation (i.e. `nrOcc.write` and `nrOcc.read`), we have:
+
+```
+Number of "write" test: 2400
+Number of "random" test: 120000
+Number of "backward" test: 120000
+Number of "skip" test: 240000
+```
+
+The sum of number of test is 482400.
+
+#### Write and resize (i.e. append then truncate)
+
+We provide a properties file example with [*script/testdfsio-resize.properties*](script/testdfsio-resize.properties):
+
+```
+test.build.data=/tmp/TestDFSIO
+resultDir=/tmp/TestDFSIO
+operation=write resize
+nrOcc.write=1
+nrOcc.resize=50
+resize.size=100MB 200MB
+nrFiles=10 20 40 80 160
+size=1GB 2GB
+bufferSize=4096 8192 16384 32768
+dfs.blocksize=64m 128m 256m 512m 1g
+dfs.replication=1 2 3 4 5 6
+compression=nil org.apache.hadoop.io.compress.SnappyCodec org.apache.hadoop.io.compress.Lz4Codec org.apache.hadoop.io.compress.BZip2Codec
+java.home=/opt/jdk1.8.0_231
+jarFile=script/TestDFSIO-0.0.1.jar
+mapreduce.job.running.map.limit=16
+```
+
+With all combination of each item of `resize.size`, `nrFiles`, `size`, `bufferSize`, `dfs.blocksize`, `dfs.replication`, `compression` and the numbers of execution for each operation (i.e. `nrOcc.write` and `nrOcc.resize`), we have:
+
+```
+Number of "write" test: 4800
+Number of "resize" test: 960000
+```
+
+The sum of number of test is 964800.

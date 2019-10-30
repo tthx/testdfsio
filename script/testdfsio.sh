@@ -508,7 +508,7 @@ function main {
                           iOcc=$((iOcc+1));
                           err="$(${cmd} \
                             -${WRITE_PROP} \
-                            -${SIZE_PROP} "${iSize}" \
+                            -${SIZE_PROP} ${iSize} \
                             ${result_file}-${WRITE_PROP}.log 2>&1)";
                           if [[ ${?} -ne 0 ]];
                           then
@@ -528,7 +528,7 @@ function main {
                             iOcc=$((iOcc+1));
                             err="$(${cmd} \
                               -${APPEND_PROP} \
-                              -${SIZE_PROP} "${iReSize}" \
+                              -${SIZE_PROP} ${iReSize} \
                               ${result_file}-${APPEND_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
@@ -539,7 +539,7 @@ function main {
                             iOcc=$((iOcc+1));
                             err="$(${cmd} \
                               -${TRUNCATE_PROP} \
-                              -${SIZE_PROP} "${iReSize}" \
+                              -${SIZE_PROP} ${iReSize} \
                               ${result_file}-${TRUNCATE_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
@@ -593,7 +593,7 @@ function main {
                             err="$(${cmd} \
                               -${READ_PROP} \
                               -${SHORT_CIRCUIT_PROP} \
-                              -${SIZE_PROP} "${iSize}" \
+                              -${SIZE_PROP} ${iSize} \
                               ${result_file}-${READ_PROP}-${SHORT_CIRCUIT_PROP}.log 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
@@ -615,8 +615,8 @@ function main {
                             err="$(${cmd} \
                               -${READ_PROP} \
                               -${SKIP_PROP} \
-                              -${SKIP_SIZE_PROP} "${iSkip}" \
-                              -${SIZE_PROP} "${iSize}" \
+                              -${SKIP_SIZE_PROP} ${iSkip} \
+                              -${SIZE_PROP} ${iSize} \
                               ${result_file}-${READ_PROP}-${SKIP_PROP}-${SKIP_SIZE_PROP}=${iSkip}.log 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
