@@ -82,7 +82,7 @@ The following table describes others TestDFSIO arguments:
 |`-clean`|Deletes the HDFS output folder specified by `test.build.data` (`/benchmarks/TestDFSIO` by default).|
 |`-compression <codecClassName>`|Performs read/write compressions on a HDFS cluster. Available parameter values are:<br><br>- `org.apache.hadoop.io.compress.BZip2Codec`,<br>- `org.apache.hadoop.io.compress.DefaultCodec`,<br>- `org.apache.hadoop.io.compress.DeflateCodec`,<br>- `org.apache.hadoop.io.compress.GzipCodec`,<br>- `org.apache.hadoop.io.compress.Lz4Codec`,<br>- `org.apache.hadoop.io.compress.SnappyCodec`.<br><br>To be consistent, when you use compression codec at write, you must use the same compression codec at read.<br><br>**Note**: TestDFSIO reads compressed files without raising exception if you don’t specify compression codec. But it raises exceptions if you attempt to read with a different codec than the one used at write.|
 |`-storagePolicy <storagePolicyName>`|Performs read/write with storages policies. Available parameter values are:<br><br>- `PROVIDED`,<br>- `COLD`,<br>- `WARM`,<br>- `HOT`,<br>- `ONE_SSD`,<br>- `ALL_SSD`,<br>- `LAZY_PERSIST`.<br><br>For their meaning, see [*Archival Storage, SSD & Memory*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/ArchivalStorage.html)|
-|`-erasureCodePolicy <erasureCodePolicyName>`|Performs read/write with HDFS erasure coding. Available parameter values are:<br><br>- `RS-10-4-1024k`,<br>- `RS-3-2-1024k`,<br>- `RS-6-3-1024k`,<br>- `RS-LEGACY-6-3-1024k`,<br>- `XOR-2-1-1024k`,<br><br>For their meaning, see [*HDFS Erasure Coding*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/HDFSErasureCoding.html).|
+|`-erasureCodePolicy <erasureCodePolicyName>`|Performs read/write with HDFS erasure coding. Available parameter values are:<br><br>- `RS-10-4-1024k`,<br>- `RS-3-2-1024k`,<br>- `RS-6-3-1024k`,<br>- `RS-LEGACY-6-3-1024k`,<br>- `XOR-2-1-1024k`.<br><br>For their meaning, see [*HDFS Erasure Coding*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/HDFSErasureCoding.html).|
 
 In `[genericOptions]`, the most common HDFS behaviors we would like to alter are:
 
@@ -109,4 +109,78 @@ In `[genericOptions]`, the most common HDFS behaviors we would like to alter are
 
 ## Automatize Tests
 
-To automatize tests, we provide [*testdfsio.sh*](script/testdfsio.sh), a BASH script.
+To automatize tests, we provide [*testdfsio.sh*](script/testdfsio.sh), a BASH script.The script accept only one argument: a properties file. Available properties are:
+
+|Key|Default value|Description|
+|---:|:---|:---|
+|`test.build.data`||HDFS directory where TestDFSIO performs operations. User's script must have read and write permission to create this directory.|
+|`resultDir`||Local directory where TestDFSIO will store results.|
+|`operation`||A list of operations to perform. Available operations are:<br><br>- `write`,<br> - `read`,<br> - `resize` (i.e. `append` and `truncate`),<br> - `random`,<br> - `backward`,<br> - `skip`,<br> - `shortcircuit`.<br><br>Except `resize`, others operations have the meaning given in the previous section. `resize` is a shortcut for two sequential TestDFSIO tests: `append` and `truncate`, in this order. Operation order matter. For example:<br><br>- with `operation=write read skip`, the test sequence is `write` then `read` and `skip`.<br> - with `operation=write skip read`, the test sequence is `write` then `skip` and `read`.|
+|`nrFiles`||A list of number of file.|
+|`size`||A list of file size.|
+|`bufferSize`|`4096`|A list of buffer size.|
+|`dfs.blocksize`|`256m`|A list of block size.|
+|`dfs.replication`|`3`|A list of number of replication per block.|
+|`compression`|`nil`|A list of compression codec|
+|`storagePolicy`|`nil`|A list of storage policy.|
+|`erasureCodePolicy`|`nil`|A list of erasure code policy.|
+|`nrOcc.write`||Number of `write` operation for each combination for each item in:<br><br>- `nrFiles`,<br> - `size`,<br> - `bufferSize`,<br> - `dfs.blocksize`,<br> - `dfs.replication`,<br> - `compression`,<br> - `storagePolicy`,<br> - `erasureCodePolicy`.|
+|`nrOcc.resize`||Number of `resize` operation for each combination involve in `write` operation to which is added each item of `resize.size`.|
+|`resize.size`||For `resize` operation: list of size to append and to truncate|
+|`nrOcc.read`||Number of `read`, or `random`, or `backward`, or `skip`, or `shortcircuit` operation for each combination involve in `write` operation.|
+|`skipSize`||For `skip` operation: list of size to skip. Each item of this list is added each combination involve in `read` operation.|
+|`java.home`||Local Java home directory.|
+|`java.opts`||Local Java options.|
+|`jarFile`||Local JAR file name of TestDFSIO.|
+|`hadoop.home`||Local Hadoop home directory.|
+|`hadoop.conf.dir`||Local Hadoop configuration directory.|
+|`yarn.app.mapreduce.am.log.level`|`INFO`|See previous section.|
+|`mapreduce.job.maps`|`2`|See previous section.|
+|`mapreduce.job.running.map.limit`|`0`|See previous section.|
+|`mapreduce.map.memory.mb`|`1024`|See previous section.|
+|`mapreduce.map.java.opts`|`-XX:+UseG1GC`|See previous section.|
+|`mapreduce.map.log.level`|`INFO`|See previous section.|
+|`mapreduce.job.reduces`|`1`|See previous section.|
+|`mapreduce.job.running.reduce.limit`|`0`|See previous section.|
+|`mapreduce.reduce.memory.mb`|`1024`|See previous section.|
+|`mapreduce.reduce.java.opts`|`-XX:+UseG1GC`|See previous section.|
+|`mapreduce.reduce.log.level`|`INFO`|See previous section.|
+
+### Properties example
+
+We provide a properties file example with [*script/testdfsio.properties*](script/testdfsio.properties):
+
+```
+test.build.data=/tmp/TestDFSIO
+resultDir=/tmp/TestDFSIO
+operation=write resize read random backward skip shortcircuit
+nrOcc.write=50
+nrOcc.resize=50
+resize.size=100MB 200MB
+nrOcc.read=50
+nrFiles=10 20 40 80 160
+size=1GB 2GB
+skipSize=10MB 20MB
+bufferSize=4096 8192 16384 32768
+dfs.blocksize=64m 128m 512m 1g
+dfs.replication=1 2 3 4 5 6
+compression=nil org.apache.hadoop.io.compress.SnappyCodec org.apache.hadoop.io.compress.Lz4Codec
+storagePolicy=nil LAZY_PERSIST
+java.home=/opt/jdk1.8.0_231
+jarFile=script/TestDFSIO-0.0.1.jar
+mapreduce.job.running.map.limit=16
+```
+
+With all combination of each item of `resize.size`, `nrFiles`, `size`, `skipSize`, `bufferSize`, `dfs.blocksize`, `dfs.replication`, `compression`, `storagePolicy` and the number of execution for each operation, we have:
+
+```
+Number of "write" test: 288000
+Number of "resize" test: 1152000
+Number of "read" test: 288000
+Number of "random" test: 288000
+Number of "backward" test: 288000
+Number of "skip" test: 576000
+Number of "shortcircuit" test: 96000
+```
+
+The sum of number of test is 2976000.

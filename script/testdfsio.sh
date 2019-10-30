@@ -356,7 +356,7 @@ function checkRequirements {
   if [[ ! -d "${RESULT_DIR}" ]];
   then
     err="$(mkdir -p "${RESULT_DIR}" 2>&1)";
-    if [[ ${?} ]];
+    if [[ ${?} -ne 0 ]];
     then
       echoerr "${errmsg} Unable to create directory \"${RESULT_DIR}\": ${err}";
       return 1;
@@ -397,7 +397,7 @@ function main {
   local cmd;
   local read_cmd;
   local parameters;
-  local progression;
+  local progress;
   local result_file;
   local nrOcc;
   local iOcc;
@@ -455,7 +455,7 @@ function main {
         ;;
     esac
     nrOcc=$((nrOcc+i));
-    echo "Number of \"${iOp}\" operations: ${i}";
+    echo "Number of \"${iOp}\" test: ${i}";
   done
   iOcc=1;
   for iBlock in ${BLOCK_SIZE_LIST};
@@ -504,12 +504,12 @@ function main {
                         i=0;
                         while [[ ${i} -lt ${WRITE_OCCURENCE} ]];
                         do
-                          echo "Progression: ${iOcc}/${nrOcc}: ${WRITE_PROP},${parameters}";
+                          echo "Progress: ${iOcc}/${nrOcc}: ${WRITE_PROP},${parameters}";
                           iOcc=$((iOcc+1));
                           err="$(${cmd} \
                             -${WRITE_PROP} \
                             -${SIZE_PROP} "${iSize}" \
-                            "${result_file}-${WRITE_PROP}.log" 2>&1)";
+                            ${result_file}-${WRITE_PROP}.log 2>&1)";
                           if [[ ${?} -ne 0 ]];
                           then
                             echoerr "${errmsg} ${err}";
@@ -524,23 +524,23 @@ function main {
                           i=0;
                           while [[ ${i} -lt ${RESIZE_OCCURENCE} ]];
                           do
-                            echo "Progression: ${iOcc}/${nrOcc}: ${APPEND_PROP},add:${iReSize},${parameters}";
+                            echo "Progress: ${iOcc}/${nrOcc}: ${APPEND_PROP},add:${iReSize},${parameters}";
                             iOcc=$((iOcc+1));
                             err="$(${cmd} \
                               -${APPEND_PROP} \
                               -${SIZE_PROP} "${iReSize}" \
-                              "${result_file}-${APPEND_PROP}-${SIZE_PROP}=${iReSize}.log" 2>&1)";
+                              ${result_file}-${APPEND_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
                               return 1;
                             fi
-                            echo "Progression: ${iOcc}/${nrOcc}: ${TRUNCATE_PROP},trunc:${iReSize},${parameters}";
+                            echo "Progress: ${iOcc}/${nrOcc}: ${TRUNCATE_PROP},trunc:${iReSize},${parameters}";
                             iOcc=$((iOcc+1));
                             err="$(${cmd} \
                               -${TRUNCATE_PROP} \
                               -${SIZE_PROP} "${iReSize}" \
-                              "${result_file}-${TRUNCATE_PROP}-${SIZE_PROP}=${iReSize}.log" 2>&1)";
+                              ${result_file}-${TRUNCATE_PROP}-${SIZE_PROP}=${iReSize}.log 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
@@ -556,14 +556,14 @@ function main {
                         do
                           case "${iOp}" in
                             "${READ_PROP}")
-                              progression="Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${parameters}"
+                              progress="Progress: ${iOcc}/${nrOcc}: ${READ_PROP},${parameters}"
                               read_cmd="${cmd} \
                                 -${READ_PROP} \
                                 -${SIZE_PROP} ${iSize} \
                                 ${result_file}-${READ_PROP}.log";
                               ;;
                             *)
-                              progression="Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${iOp},${parameters}"
+                              progress="Progress: ${iOcc}/${nrOcc}: ${READ_PROP},${iOp},${parameters}"
                               read_cmd="${cmd} \
                                 -${READ_PROP} \
                                 -${iOp} \
@@ -571,7 +571,7 @@ function main {
                                 ${result_file}-${READ_PROP}-${iOp}.log";
                               ;;
                           esac
-                          echo "${progression}";
+                          echo "${progress}";
                           iOcc=$((iOcc+1));
                           err="$(${read_cmd} 2>&1)";
                           if [[ ${?} -ne 0 ]];
@@ -588,13 +588,13 @@ function main {
                           i=0;
                           while [[ ${i} -lt ${READ_OCCURENCE} ]];
                           do
-                            echo "Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${SHORT_CIRCUIT_PROP},${parameters}";
+                            echo "Progress: ${iOcc}/${nrOcc}: ${READ_PROP},${SHORT_CIRCUIT_PROP},${parameters}";
                             iOcc=$((iOcc+1));
                             err="$(${cmd} \
                               -${READ_PROP} \
                               -${SHORT_CIRCUIT_PROP} \
                               -${SIZE_PROP} "${iSize}" \
-                              "${result_file}-${READ_PROP}-${SHORT_CIRCUIT_PROP}.log" 2>&1)";
+                              ${result_file}-${READ_PROP}-${SHORT_CIRCUIT_PROP}.log 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";
@@ -610,14 +610,14 @@ function main {
                           i=0;
                           while [[ ${i} -lt ${READ_OCCURENCE} ]];
                           do
-                            echo "Progression: ${iOcc}/${nrOcc}: ${READ_PROP},${SKIP_PROP}:${iSkip},${parameters}";
+                            echo "Progress: ${iOcc}/${nrOcc}: ${READ_PROP},${SKIP_PROP}:${iSkip},${parameters}";
                             iOcc=$((iOcc+1));
                             err="$(${cmd} \
                               -${READ_PROP} \
                               -${SKIP_PROP} \
                               -${SKIP_SIZE_PROP} "${iSkip}" \
                               -${SIZE_PROP} "${iSize}" \
-                              "${result_file}-${READ_PROP}-${SKIP_PROP}-${SKIP_SIZE_PROP}=${iSkip}.log" 2>&1)";
+                              ${result_file}-${READ_PROP}-${SKIP_PROP}-${SKIP_SIZE_PROP}=${iSkip}.log 2>&1)";
                             if [[ ${?} -ne 0 ]];
                             then
                               echoerr "${errmsg} ${err}";

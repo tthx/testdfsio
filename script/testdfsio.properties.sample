@@ -1,10 +1,11 @@
 #
-# General properties
+# General properties.
 #
 
-# HDFS directory where TestDFSIO performs operations
+# HDFS directory where TestDFSIO performs operations.
 test.build.data
-# Local directory where are store TestDFSIO results
+
+# Local directory where TestDFSIO will store results.
 resultDir
 
 # Available values for 'operation' property:
@@ -15,84 +16,106 @@ resultDir
 # - backward
 # - skip
 # - shortcircuit
-# 'operation' is a list of previous values. Order matters.
+# 'operation' is a list of previous values.
+# Order matters.
 operation
 
-# A list of number of file
+# A list of number of file.
 nrFiles
 
-# A list of number of file size
+# A list of file size.
 size
 
-# A list of number of buffer size
+# A list of buffer size.
 bufferSize
 
-# A list of number of block size
+# A list of block size.
 dfs.blocksize
 
-# A list of number of number of replication per block
+# A list of number of replication per block.
 dfs.replication
 
-# A list of number of compression codec
+# A list of compression codec.
 compression
 
-# A list of number of storage policy
+# A list of storage policy.
 storagePolicy
 
-# A list of number of erasure code policy
+# A list of erasure code policy
 erasureCodePolicy
 
 #
-# Write properties
+# Write properties.
 #
 
-# Number of 'write' operation for each combination for each item in:
-# - nrFiles
-# - size
-# - bufferSize
-# - dfs.blocksize
-# - dfs.replication
-# - compression
-# - storagePolicy
-# - erasureCodePolicy
+# Number of 'write' operation for each
+# combination for each item in:
+# - nrFiles,
+# - size,
+# - bufferSize,
+# - dfs.blocksize,
+# - dfs.replication,
+# - compression,
+# - storagePolicy,
+# - erasureCodePolicy.
 nrOcc.write
 
-# Number of 'resize' operation for each combination involve in 'write' operation to which is added each item of 'resize.size'
+# Number of 'resize' operation for each combination
+# involve in 'write' operation
+# to which is added each item of 'resize.size'.
 nrOcc.resize
 
-# For 'resize' operation: list of size to append and to truncate
+# For 'resize' operation: list of size
+# to append and to truncate.
 resize.size
 
 #
-# Read properties
+# Read properties.
 #
 
-# Number of 'read' operation for each combination involve in 'write' operation
+# Number of 'read', or 'random',
+# or 'backward', or 'skip',
+# or 'shortcircuit' operation for each
+# combination involve in 'write' operation.
 nrOcc.read
 
-# For 'skip' operation: list of size to skip. Each item of this list is added each combination involve in 'read' operation
+# For 'skip' operation: list of size to skip.
+# Each item of this list is added each
+# combination involve in 'read' operation.
 skipSize
 
 #
-# Java properties
+# Java properties.
 #
+
+# Local Java home directory.
 java.home
+
+# Local Java options
 java.opts
+
+# Local JAR file name of TestDFSIO
 jarFile
 
 #
-# Hadoop properties
+# Hadoop properties.
 #
+
+# Local Hadoop home directory.
 hadoop.home
+
+# Local Hadoop configuration directory.
 hadoop.conf.dir
 
 #
-# Application Master properties
+# Application Master properties.
 #
+
+# Application Master log level.
 yarn.app.mapreduce.am.log.level
 
 #
-# Map tasks properties
+# Map tasks properties.
 #
 mapreduce.job.maps
 mapreduce.job.running.map.limit
@@ -101,7 +124,7 @@ mapreduce.map.java.opts
 mapreduce.map.log.level
 
 #
-# Reducer tasks properties
+# Reducer tasks properties.
 #
 mapreduce.job.reduces
 mapreduce.job.running.reduce.limit
