@@ -1,6 +1,7 @@
 #
 # General properties
 #
+
 # HDFS directory where TestDFSIO performs operations
 test.build.data
 # Local directory where are store TestDFSIO results

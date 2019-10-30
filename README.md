@@ -4,6 +4,9 @@ This project is just an debugged version of [*Apache Hadoop TestDFSIO*](https://
 
 - correct the buggy [*storage policies*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/ArchivalStorage.html) feature in TestDFSIO,
 - add [*short circuit local reads*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/ShortCircuitLocalReads.html) feature.
+- provide facilities to automatize tests.
+
+## TestDFSIO Description
 
 TestDFSIO is claimed as a distributed I/O benchmark. TestDFSIO writes into or reads from a specified number of files. Number of bytes to write or read is specified as a parameter to the test. Each file is accessed in a separate map task. The reducer collects the following statistics:
 
@@ -103,3 +106,7 @@ In `[genericOptions]`, the most common HDFS behaviors we would like to alter are
     - `-Dmapreduce.reduce.log.level=<log level>`, where `<log level>` is the logging level for the reduce task. The allowed levels are: `OFF`, `FATAL`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` and `ALL`.
 
 **Note**: For TestDFSIO, you should set the amount of memory for map and reduces tasks at least to 1024 and JVM garbage collector to [*G1 Garbage Collector*](https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html) with `-XX:+UseG1GC`.
+
+## Automatize Tests
+
+To automatize tests, we provide [*testdfsio.sh*](script/testdfsio.sh), a BASH script.
