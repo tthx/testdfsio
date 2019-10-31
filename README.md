@@ -6,6 +6,11 @@ This project is just an debugged version of [*Apache Hadoop TestDFSIO*](https://
 - add [*short circuit local reads*](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/ShortCircuitLocalReads.html) feature.
 - provide facilities to automatize tests.
 
+## Requirements
+
+- JDK 1.8.x
+- Apache Hadoop at least 3.2.1
+
 ## TestDFSIO Description
 
 TestDFSIO is claimed as a distributed I/O benchmark. TestDFSIO writes into or reads from a specified number of files. Number of bytes to write or read is specified as a parameter to the test. Each file is accessed in a separate map task. The reducer collects the following statistics:
